@@ -1,4 +1,5 @@
 import { withLog } from './with-log.js';
+import { cachedProxy, registerProxy, unwrap } from './proxy-registry.js';
 
 export interface LoggingProxyOptions<T extends object> {
   name: string;
@@ -12,24 +13,40 @@ export function createLoggingProxy<T extends object>(
   target: T,
   options: LoggingProxyOptions<T>,
 ): T {
+  target = unwrap(target);
+  const existing = cachedProxy(target);
+  if (existing) return existing;
+  const methodCache = new Map<
+    PropertyKey,
+    { original: object; wrapped: (...args: unknown[]) => unknown }
+  >();
   const methods = new Set<PropertyKey>(options.asyncMethods);
   const proxy = new Proxy(target, {
     get(raw, property) {
       const value: unknown = Reflect.get(raw, property, raw);
       if (typeof value !== 'function') return finish(value, property);
+      if (property === 'constructor') return value;
+      const previous = methodCache.get(property);
+      if (previous?.original === value) return previous.wrapped;
       const call = (...args: unknown[]): unknown =>
-        Reflect.apply(value, raw, args);
+        Reflect.apply(
+          value,
+          raw,
+          args.map((argument) => unwrap(argument)),
+        );
       const invoke = methods.has(property)
         ? withLog(`${options.name}.${String(property)}`, (...args: unknown[]) =>
             Promise.resolve(call(...args)),
           )
         : call;
-      return (...args: unknown[]): unknown => {
+      const wrapped = (...args: unknown[]): unknown => {
         const result = invoke(...args);
         return result instanceof Promise
           ? result.then((resolved: unknown) => finish(resolved, property))
           : finish(result, property);
       };
+      methodCache.set(property, { original: value, wrapped });
+      return wrapped;
     },
     set(raw, property, value: unknown) {
       return Reflect.set(raw, property, value, raw);
@@ -43,5 +60,6 @@ export function createLoggingProxy<T extends object>(
       return value;
     }
   }
+  registerProxy(target, proxy);
   return proxy;
 }
