@@ -145,11 +145,11 @@ describe('withPageLogging', () => {
     await expect(page.goto('reject')).rejects.toBe(raw.error);
   });
 
-  test('戻り値を再ラップせず、チェーンは生インスタンスを返す', () => {
+  test('第3回ではthisの戻り値をProxyへ戻してチェーンを保つ', () => {
     const raw = new PageFixture();
     const page = withPageLogging(raw);
-    expect(page.chain()).toBe(raw);
-    expect(page.chain()).not.toBe(page);
+    expect(page.chain()).toBe(page);
+    expect(page.chain()).not.toBe(raw);
   });
 
   test('native内部スロットが必要なgetter・メソッドにも実体を渡す', () => {
