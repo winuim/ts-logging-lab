@@ -1,5 +1,4 @@
-import { Keyboard, Locator, Page } from 'puppeteer';
-import type { Browser } from 'puppeteer';
+import { Browser, BrowserContext, Keyboard, Locator, Page } from 'puppeteer';
 
 import { createLoggingProxy } from './logging-proxy.js';
 import type { LogOptions } from './log-event.js';
@@ -11,9 +10,14 @@ export function withBrowserLogging(
   return createLoggingProxy(browser, {
     ...options,
     name: 'browser',
-    asyncMethods: ['newPage'],
-    wrapResult: (value) =>
-      value instanceof Page ? withPageLogging(value, options) : value,
+    resourceKind: 'browser',
+    asyncMethods: ['newPage', 'createBrowserContext'],
+    wrapResult: (value) => {
+      if (value instanceof Page) return withPageLogging(value, options);
+      if (value instanceof BrowserContext)
+        return withBrowserContextLogging(value, options);
+      return value;
+    },
   });
 }
 
@@ -24,8 +28,13 @@ export function withPageLogging<T extends Pick<Page, 'goto'>>(
   return createLoggingProxy(page, {
     ...options,
     name: 'page',
+    resourceKind: 'page',
     asyncMethods: ['goto'],
     wrapResult: (value, property) => {
+      if (property === 'browserContext' && value instanceof BrowserContext)
+        return withBrowserContextLogging(value, options);
+      if (property === 'browser' && value instanceof Browser)
+        return withBrowserLogging(value, options);
       if (property === 'keyboard' && value instanceof Keyboard)
         return withKeyboardLogging(value, options);
       if (property === 'locator' && value instanceof Locator)
@@ -42,6 +51,7 @@ export function withKeyboardLogging(
   return createLoggingProxy(keyboard, {
     ...options,
     name: 'keyboard',
+    resourceKind: 'keyboard',
     asyncMethods: ['type', 'press'],
   });
 }
@@ -53,8 +63,26 @@ export function withLocatorLogging<T>(
   return createLoggingProxy(locator, {
     ...options,
     name: 'locator',
+    resourceKind: 'locator',
     asyncMethods: ['click', 'fill'],
     wrapResult: (value) =>
       value instanceof Locator ? withLocatorLogging(value, options) : value,
+  });
+}
+
+export function withBrowserContextLogging(
+  context: BrowserContext,
+  options: LogOptions = {},
+): BrowserContext {
+  return createLoggingProxy(context, {
+    ...options,
+    name: 'context',
+    resourceKind: 'context',
+    asyncMethods: ['newPage'],
+    wrapResult: (value) => {
+      if (value instanceof Page) return withPageLogging(value, options);
+      if (value instanceof Browser) return withBrowserLogging(value, options);
+      return value;
+    },
   });
 }

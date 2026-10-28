@@ -47,3 +47,6 @@ export type {
   AfterContext,
   ErrorContext,
 } from './context-extractor.js';
+export { ResourceContext } from './resource-context.js';
+export type { ResourceKind, ResourceDescription } from './resource-context.js';
+export { withBrowserContextLogging } from './with-page-logging.js';
