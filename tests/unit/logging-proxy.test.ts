@@ -51,13 +51,16 @@ test('戻り値選択は同期・Promise・getterに適用し、失敗時は元�
   expect(proxy.getChild()).toBe(wrapped);
   expect(await proxy.later()).toBe(wrapped);
   expect(proxy.scalar()).toBeNull();
-  const failed = createLoggingProxy(raw, {
-    name: 'parent',
-    asyncMethods: [],
-    wrapResult() {
-      throw new Error('mapper');
+  const failed = createLoggingProxy(
+    { ...raw },
+    {
+      name: 'parent',
+      asyncMethods: [],
+      wrapResult() {
+        throw new Error('mapper');
+      },
     },
-  });
+  );
   expect(failed.child).toBe(child);
   expect(await failed.later()).toBe(child);
 });
