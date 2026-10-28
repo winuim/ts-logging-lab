@@ -1,3 +1,8 @@
+import {
+  beforeContext,
+  afterContext,
+  extractSafely,
+} from './context-extractor.js';
 import { defaultArgumentPolicy, maskArguments } from './masking-policy.js';
 import { createLogEvent, parseLevelOverrides } from './event-catalog.js';
 import type { EventId } from './event-catalog.js';
@@ -11,7 +16,7 @@ const defaultAdapter = new LogTapeAdapter();
 export function withLog<This, Args extends unknown[], Result>(
   operation: string,
   fn: (this: This, ...args: Args) => Promise<Result>,
-  options: LogOptions = {},
+  options: LogOptions<Result> = {},
 ): (this: This, ...args: Args) => Promise<Result> {
   const adapter = options.adapter ?? defaultAdapter;
   const overrides = parseLevelOverrides(options.levelOverrides ?? {});
@@ -39,14 +44,23 @@ export function withLog<This, Args extends unknown[], Result>(
       operation,
       args,
     );
-    emit('start', attributes);
+    const context = beforeContext(operation, args);
+    const before = extractSafely(() => options.extractor?.before?.(context));
+    emit('start', { ...before, ...attributes });
     const startedAt = performance.now();
     try {
       const result = await fn.apply(this, args);
-      emit('success', attributes, performance.now() - startedAt);
+      const durationMs = performance.now() - startedAt;
+      const after = extractSafely(() =>
+        options.extractor?.after?.(afterContext(context, result)),
+      );
+      emit('success', { ...before, ...after, ...attributes }, durationMs);
       return result;
     } catch (error: unknown) {
-      emit('failure', attributes, performance.now() - startedAt);
+      const durationMs = performance.now() - startedAt;
+      const failure = Object.freeze({ ...context, failed: true });
+      const extra = extractSafely(() => options.extractor?.error?.(failure));
+      emit('failure', { ...before, ...extra, ...attributes }, durationMs);
       throw error;
     }
   };

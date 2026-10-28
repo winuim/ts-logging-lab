@@ -36,3 +36,14 @@ export type {
   ArgumentRule,
   ArgumentValue,
 } from './masking-policy.js';
+export {
+  navigationContext,
+  safeUrlAttributes,
+  safeSelectorAttributes,
+} from './context-extractor.js';
+export type {
+  ContextExtractor,
+  BeforeContext,
+  AfterContext,
+  ErrorContext,
+} from './context-extractor.js';

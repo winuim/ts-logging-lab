@@ -1,3 +1,4 @@
+import type { ContextExtractor } from './context-extractor.js';
 import type { ArgumentPolicy } from './masking-policy.js';
 import type { EventId, LevelOverrides } from './event-catalog.js';
 
@@ -17,7 +18,8 @@ export interface LogEvent {
 export interface LogAdapter {
   emit(event: LogEvent): void | Promise<void>;
 }
-export interface LogOptions {
+export interface LogOptions<Result = unknown> {
+  extractor?: ContextExtractor<Result>;
   argumentPolicy?: ArgumentPolicy;
   levelOverrides?: LevelOverrides;
   adapter?: LogAdapter;

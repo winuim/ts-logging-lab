@@ -66,25 +66,33 @@ export function maskArguments(
 ): LogAttributes {
   try {
     const output: unknown = policy(operation, argumentSnapshot(args));
-    if (output === null || typeof output !== 'object' || Array.isArray(output))
+    if (output instanceof Promise) {
+      void output.catch(() => undefined);
       return hidden(args.length);
-    const result: Record<string, string | number | boolean | null> = {};
-    for (const [key, entryValue] of Object.entries(output)) {
-      const value: unknown = entryValue;
-      if (reserved.has(key)) return hidden(args.length);
-      if (
-        value === null ||
-        typeof value === 'string' ||
-        typeof value === 'boolean' ||
-        (typeof value === 'number' && Number.isFinite(value))
-      )
-        result[key] = value;
-      else return hidden(args.length);
     }
-    return Object.freeze(result);
+    return sanitizeAttributes(output) ?? hidden(args.length);
   } catch {
     return hidden(args.length);
   }
+}
+
+export function sanitizeAttributes(output: unknown): LogAttributes | undefined {
+  if (output === null || typeof output !== 'object' || Array.isArray(output))
+    return undefined;
+  const result: Record<string, string | number | boolean | null> = {};
+  for (const [key, entryValue] of Object.entries(output)) {
+    const value: unknown = entryValue;
+    if (reserved.has(key)) return undefined;
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value))
+    )
+      result[key] = value;
+    else return undefined;
+  }
+  return Object.freeze(result);
 }
 
 export function createPuppeteerPolicy(
