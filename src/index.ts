@@ -23,3 +23,16 @@ export {
   parseLevelOverrides,
 } from './event-catalog.js';
 export type { EventId, LevelOverrides } from './event-catalog.js';
+export {
+  REDACTED,
+  createArgumentPolicy,
+  createPuppeteerPolicy,
+  maskArguments,
+  argumentSnapshot,
+  defaultArgumentPolicy,
+} from './masking-policy.js';
+export type {
+  ArgumentPolicy,
+  ArgumentRule,
+  ArgumentValue,
+} from './masking-policy.js';

@@ -1,3 +1,4 @@
+import type { ArgumentPolicy } from './masking-policy.js';
 import type { EventId, LevelOverrides } from './event-catalog.js';
 
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
@@ -17,6 +18,7 @@ export interface LogAdapter {
   emit(event: LogEvent): void | Promise<void>;
 }
 export interface LogOptions {
+  argumentPolicy?: ArgumentPolicy;
   levelOverrides?: LevelOverrides;
   adapter?: LogAdapter;
 }
