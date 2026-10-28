@@ -94,6 +94,15 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - [ ] 実装済みと構想の区別が明確
 - [ ] 該当回のタグは完了後にのみ作る
 
+## 開発環境と検証
+
+- バージョン・セットアップ・実行コマンド・ディレクトリ構成はREADMEの「セットアップ」を正とする。依存更新時はpackage.json、lockfile、READMEを同期する。
+- GitHub Actionsは課金しない方針のため使用しない。明示的な方針変更の依頼なしにワークフローを追加・有効化しない。検証はローカルで実行してPRに結果を記録する。
+- PR前に`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`を実行する。
+- ブラウザ不要のテストは`tests/unit/`、Puppeteerが必要なテストは`tests/integration/`に置く。単体テストへブラウザ準備を持ち込まない。
+- 現在の統合テストは空で、専用コマンドは終了コード1になる。実ブラウザを扱う回で依存・ローカルでのブラウザ準備を追加する。
+- 現在は開発基盤のみ。空のエントリーポイントを教材APIの実装済みとみなさない。
+
 ## 未決定事項
 
-Node.js/TypeScript/Puppeteer/LogTape/OpenTelemetryのバージョン、パッケージマネージャ、CI、ディレクトリ構成、ライセンスなどは初期構成Issueで決める。現時点で具体的な設定やコマンドが存在すると仮定しない。
+Puppeteer・LogTape・OpenTelemetryのバージョンはそれぞれを導入する回で決める。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。
