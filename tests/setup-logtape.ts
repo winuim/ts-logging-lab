@@ -7,7 +7,13 @@ beforeEach(() => {
     reset: true,
     sinks: {
       test(record) {
-        console.info(record.message.join(''));
+        // 既存テストはphase/時間を観測する。カタログの固定文言は別テストで検証する。
+        const { operation, phase, durationMs } = record.properties;
+        const suffix =
+          typeof durationMs === 'number'
+            ? ` (${durationMs.toFixed(2)} ms)`
+            : '';
+        console.info(`${String(operation)}: ${String(phase)}${suffix}`);
       },
     },
     loggers: [

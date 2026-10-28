@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第5回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第6回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第6回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第7回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -226,3 +226,7 @@ WeakMapでProxyと実体を対応付け、二重ラップとメソッド参照�
 ## 第5回の追加
 
 ログ生成をロガー非依存の`LogEvent`/`LogAdapter`へ分け、唯一の具体的出力として`LogTapeAdapter`を追加しました。[契約・障害隔離・flushの境界](docs/part-05.md)を参照してください。`withLog`やProxyのoptionsへ`{ adapter }`を指定できます。省略時もLogTapeを使うため、呼び出し側で`configure`を行います。実行例にはその設定を追加済みです。LogTape 2.4.2を固定し、フィルタ・Sink・整形はLogTapeに任せます。
+
+## 第6回の追加
+
+`eventCatalog`と`createLogEvent`でID・カテゴリ・既定レベル・固定メッセージを統一します。`levelOverrides`でID別の割り当てを上書きでき、外部設定は`parseLevelOverrides`で検証します。[型・設定・フィルタの責務](docs/part-06.md)を参照してください。出力可否と整形は引き続きLogTapeが担当します。

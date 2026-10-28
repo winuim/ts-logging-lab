@@ -1,10 +1,9 @@
 import { withLog } from './with-log.js';
-import type { LogAdapter } from './log-event.js';
+import type { LogOptions } from './log-event.js';
 import { cachedProxy, registerProxy, unwrap } from './proxy-registry.js';
 
-export interface LoggingProxyOptions<T extends object> {
+export interface LoggingProxyOptions<T extends object> extends LogOptions {
   name: string;
-  adapter?: LogAdapter;
   /** Promiseを返す操作のみを指定する。同期メソッドはbindだけを行う。 */
   asyncMethods: readonly (keyof T)[];
   /** 同じ公開型を保つラッパーを返す。例外時は元の戻り値を採用する。 */
