@@ -53,3 +53,7 @@ export { withBrowserContextLogging } from './with-page-logging.js';
 
 export { openTelemetryCorrelation } from './opentelemetry-correlation.js';
 export type { Correlation, CorrelationProvider } from './correlation.js';
+
+export { subscribeDiagnostics } from './diagnostics.js';
+export type { DiagnosticOptions } from './diagnostics.js';
+export type { OperationPhase } from './log-event.js';

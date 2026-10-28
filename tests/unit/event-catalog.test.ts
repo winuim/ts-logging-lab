@@ -68,3 +68,16 @@ export function invalidTypes(): void {
   const invalid: LevelOverrides = { 'operation.start': 'fatal' };
   void Object.keys(invalid);
 }
+
+test('診断カタログは操作の成否と別phaseを持つ', () => {
+  expect(
+    createLogEvent('http.response', 'page.diagnostic', { httpStatus: 404 }),
+  ).toMatchObject({ category: 'http', phase: 'diagnostic', level: 'info' });
+  expect(createLogEvent('http.failed', 'page.diagnostic').level).toBe(
+    'warning',
+  );
+  expect(createLogEvent('page.console', 'page.diagnostic').level).toBe('info');
+  expect(createLogEvent('page.exception', 'page.diagnostic').level).toBe(
+    'error',
+  );
+});

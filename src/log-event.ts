@@ -8,11 +8,12 @@ export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 export type LogAttributes = Readonly<
   Record<string, string | number | boolean | null>
 >;
+export type OperationPhase = 'start' | 'success' | 'failure';
 export interface LogEvent {
   readonly eventId: EventId;
   readonly category: string;
   readonly operation: string;
-  readonly phase: 'start' | 'success' | 'failure';
+  readonly phase: OperationPhase | 'diagnostic';
   readonly level: LogLevel;
   readonly message: string;
   readonly attributes: LogAttributes;
