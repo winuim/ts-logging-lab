@@ -1,8 +1,10 @@
 import { withLog } from './with-log.js';
+import type { LogAdapter } from './log-event.js';
 import { cachedProxy, registerProxy, unwrap } from './proxy-registry.js';
 
 export interface LoggingProxyOptions<T extends object> {
   name: string;
+  adapter?: LogAdapter;
   /** Promiseを返す操作のみを指定する。同期メソッドはbindだけを行う。 */
   asyncMethods: readonly (keyof T)[];
   /** 同じ公開型を保つラッパーを返す。例外時は元の戻り値を採用する。 */
@@ -35,8 +37,10 @@ export function createLoggingProxy<T extends object>(
           args.map((argument) => unwrap(argument)),
         );
       const invoke = methods.has(property)
-        ? withLog(`${options.name}.${String(property)}`, (...args: unknown[]) =>
-            Promise.resolve(call(...args)),
+        ? withLog(
+            `${options.name}.${String(property)}`,
+            (...args: unknown[]) => Promise.resolve(call(...args)),
+            options,
           )
         : call;
       const wrapped = (...args: unknown[]): unknown => {

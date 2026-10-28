@@ -2,9 +2,12 @@ import type { GoToOptions, HTTPResponse, Page } from 'puppeteer';
 import { expectTypeOf, test } from 'vitest';
 
 import { withPageLogging } from '../../src/index.js';
+import type { LogOptions } from '../../src/index.js';
 
 test('Pageを受け取り同じ公開型を返す', () => {
-  expectTypeOf(withPageLogging<Page>).parameters.toEqualTypeOf<[Page]>();
+  expectTypeOf(withPageLogging<Page>).parameters.toEqualTypeOf<
+    [Page, options?: LogOptions | undefined]
+  >();
   expectTypeOf(withPageLogging<Page>).returns.toEqualTypeOf<Page>();
 });
 
