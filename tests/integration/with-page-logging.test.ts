@@ -53,7 +53,7 @@ test('実Pageのgoto・keyboard・未ラップメソッドが動く', async () =
   const original = currentPage();
   const page = withPageLogging(original);
   expect(await page.goto('about:blank', { waitUntil: 'load' })).toBeNull();
-  expect(page.keyboard).toBe(original.keyboard);
+  expect(page.keyboard).not.toBe(original.keyboard);
   expect(page.mainFrame()).toBe(original.mainFrame());
   await page.setContent('<input id="field"><title>Proxy test</title>');
   await page.focus('#field');
@@ -64,7 +64,7 @@ test('実Pageのgoto・keyboard・未ラップメソッドが動く', async () =
   expect(await page.title()).toBe('Proxy test');
   expect(await page.evaluate(() => 6 * 7)).toBe(42);
   expect(page.url()).toBe('about:blank');
-  expect(console.info).toHaveBeenCalledTimes(2);
+  expect(console.info).toHaveBeenCalledTimes(4);
 });
 
 test('実PageのHTTPResponseを同じオブジェクトで返す', async () => {

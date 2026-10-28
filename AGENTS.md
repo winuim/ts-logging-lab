@@ -105,7 +105,7 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - PR前に`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`を実行する。
 - ブラウザ不要のテストは`tests/unit/`、Puppeteerが必要なテストは`tests/integration/`に置く。単体テストへブラウザ準備を持ち込まない。
 - 実ブラウザの変更時は`npm run browser:install`でChromeを準備し、`npm run test:integration`と`npm run example:part-02`も実行する。通常の`npm ci`でブラウザを取得しない設定を維持する。
-- 現在は第2回のPage専用`withPageLogging`までを提供する。戻り値の再ラップ・共通Proxy基盤・WeakMap管理等の後続機能を実装済みとみなさない。
+- 実装状況と各回の動作差はREADMEとdocs/part-XX.mdを参照する。後続回の機能を完了済みとみなさない。
 
 ## 未決定事項
 

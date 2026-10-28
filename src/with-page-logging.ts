@@ -1,25 +1,43 @@
-import type { Page } from 'puppeteer';
+import { Keyboard, Locator, Page } from 'puppeteer';
+import type { Browser } from 'puppeteer';
 
-import { withLog } from './with-log.js';
+import { createLoggingProxy } from './logging-proxy.js';
 
-/** Page.gotoだけをログ化する。戻り値や子オブジェクトはラップしない。 */
+export function withBrowserLogging(browser: Browser): Browser {
+  return createLoggingProxy(browser, {
+    name: 'browser',
+    asyncMethods: ['newPage'],
+    wrapResult: (value) =>
+      value instanceof Page ? withPageLogging(value) : value,
+  });
+}
+
 export function withPageLogging<T extends Pick<Page, 'goto'>>(page: T): T {
-  return new Proxy(page, {
-    get(target, property) {
-      if (property === 'goto') {
-        return withLog('page.goto', target.goto.bind(target));
-      }
-
-      // getterにもProxyではなく実インスタンスをthisとして渡す。
-      const value: unknown = Reflect.get(target, property, target);
-      if (typeof value !== 'function') return value;
-
-      // ログ対象外も含め、メソッドのthisを実インスタンスに固定する。
-      const bound: unknown = value.bind(target);
-      return bound;
+  return createLoggingProxy(page, {
+    name: 'page',
+    asyncMethods: ['goto'],
+    wrapResult: (value, property) => {
+      if (property === 'keyboard' && value instanceof Keyboard)
+        return withKeyboardLogging(value);
+      if (property === 'locator' && value instanceof Locator)
+        return withLocatorLogging(value);
+      return value;
     },
-    set(target, property, value: unknown) {
-      return Reflect.set(target, property, value, target);
-    },
+  });
+}
+
+export function withKeyboardLogging(keyboard: Keyboard): Keyboard {
+  return createLoggingProxy(keyboard, {
+    name: 'keyboard',
+    asyncMethods: ['type', 'press'],
+  });
+}
+
+export function withLocatorLogging<T>(locator: Locator<T>): Locator<T> {
+  return createLoggingProxy(locator, {
+    name: 'locator',
+    asyncMethods: ['click', 'fill'],
+    wrapResult: (value) =>
+      value instanceof Locator ? withLocatorLogging(value) : value,
   });
 }
