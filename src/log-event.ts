@@ -1,8 +1,12 @@
+import type { EventId, LevelOverrides } from './event-catalog.js';
+
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 export type LogAttributes = Readonly<
   Record<string, string | number | boolean | null>
 >;
 export interface LogEvent {
+  readonly eventId: EventId;
+  readonly category: string;
   readonly operation: string;
   readonly phase: 'start' | 'success' | 'failure';
   readonly level: LogLevel;
@@ -13,6 +17,7 @@ export interface LogAdapter {
   emit(event: LogEvent): void | Promise<void>;
 }
 export interface LogOptions {
+  levelOverrides?: LevelOverrides;
   adapter?: LogAdapter;
 }
 

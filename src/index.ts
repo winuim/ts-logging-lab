@@ -17,3 +17,9 @@ export type {
   LogAttributes,
   LogOptions,
 } from './log-event.js';
+export {
+  eventCatalog,
+  createLogEvent,
+  parseLevelOverrides,
+} from './event-catalog.js';
+export type { EventId, LevelOverrides } from './event-catalog.js';

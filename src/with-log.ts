@@ -1,3 +1,5 @@
+import { createLogEvent, parseLevelOverrides } from './event-catalog.js';
+import type { EventId } from './event-catalog.js';
 import { emitSafely } from './log-event.js';
 import type { LogEvent, LogOptions } from './log-event.js';
 import { LogTapeAdapter } from './logtape-adapter.js';
@@ -11,16 +13,20 @@ export function withLog<This, Args extends unknown[], Result>(
   options: LogOptions = {},
 ): (this: This, ...args: Args) => Promise<Result> {
   const adapter = options.adapter ?? defaultAdapter;
+  const overrides = parseLevelOverrides(options.levelOverrides ?? {});
+  const ids = {
+    start: 'operation.start',
+    success: 'operation.success',
+    failure: 'operation.failure',
+  } satisfies Record<LogEvent['phase'], EventId>;
   function emit(phase: LogEvent['phase'], durationMs?: number): void {
-    const suffix =
-      durationMs === undefined ? '' : ` (${durationMs.toFixed(2)} ms)`;
-    emitSafely(adapter, {
+    const event = createLogEvent(
+      ids[phase],
       operation,
-      phase,
-      level: phase === 'failure' ? 'error' : 'info',
-      message: `${operation}: ${phase}${suffix}`,
-      attributes: durationMs === undefined ? {} : { durationMs },
-    });
+      durationMs === undefined ? {} : { durationMs },
+      overrides,
+    );
+    emitSafely(adapter, event);
   }
   return async function (this: This, ...args: Args): Promise<Result> {
     emit('start');

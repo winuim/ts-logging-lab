@@ -66,6 +66,9 @@ test('LogTapeがフィルタと構造化属性を担当する', async () => {
   ).rejects.toBe(error);
   expect(records).toHaveLength(1);
   expect(records[0]?.level).toBe('error');
+  expect(records[0]?.message.join('')).toBe('Operation failed');
+  expect(records[0]?.category).toEqual(['ts-logging-lab', 'operation']);
+  expect(records[0]?.properties['eventId']).toBe('operation.failure');
   expect(records[0]?.properties['operation']).toBe('fail');
   expect(records[0]?.properties['phase']).toBe('failure');
   expect(JSON.stringify(records)).not.toContain('dummy-secret');
