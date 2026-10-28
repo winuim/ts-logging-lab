@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第4回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第5回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第5回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第6回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -199,7 +199,7 @@ vitest.integration.config.ts  統合テストのみを収集
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
 - Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
-- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTape・OpenTelemetryは未導入で、使用する回で決定します。
+- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTapeは第5回で導入しました。OpenTelemetryは導入回で決定します。
 - 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
@@ -222,3 +222,7 @@ Browser・Page・Keyboard・Locatorと戻り値を共通のProxyで扱います�
 ## 第4回の追加
 
 WeakMapでProxyと実体を対応付け、二重ラップとメソッド参照を安定させます。`unwrap(value)`で登録済みProxyを実体へ戻せます。[設定の優先・寿命・イベント参照の方針](docs/part-04.md)を参照してください。同じ実体は最初の設定を採用します。
+
+## 第5回の追加
+
+ログ生成をロガー非依存の`LogEvent`/`LogAdapter`へ分け、唯一の具体的出力として`LogTapeAdapter`を追加しました。[契約・障害隔離・flushの境界](docs/part-05.md)を参照してください。`withLog`やProxyのoptionsへ`{ adapter }`を指定できます。省略時もLogTapeを使うため、呼び出し側で`configure`を行います。実行例にはその設定を追加済みです。LogTape 2.4.2を固定し、フィルタ・Sink・整形はLogTapeに任せます。

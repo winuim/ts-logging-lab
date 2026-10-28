@@ -1,33 +1,37 @@
-/**
- * 非同期処理に最小のログを付与する。引数や例外自体はログに残さない。
- * 元のPromiseと同一にはならないが、解決値と拒否理由はそのまま返す。
- */
+import { emitSafely } from './log-event.js';
+import type { LogEvent, LogOptions } from './log-event.js';
+import { LogTapeAdapter } from './logtape-adapter.js';
+
+const defaultAdapter = new LogTapeAdapter();
+
+/** 解決値と拒否理由を保持する。返すPromise自体の同一性は保持しない。 */
 export function withLog<This, Args extends unknown[], Result>(
   operation: string,
   fn: (this: This, ...args: Args) => Promise<Result>,
+  options: LogOptions = {},
 ): (this: This, ...args: Args) => Promise<Result> {
+  const adapter = options.adapter ?? defaultAdapter;
+  function emit(phase: LogEvent['phase'], durationMs?: number): void {
+    const suffix =
+      durationMs === undefined ? '' : ` (${durationMs.toFixed(2)} ms)`;
+    emitSafely(adapter, {
+      operation,
+      phase,
+      level: phase === 'failure' ? 'error' : 'info',
+      message: `${operation}: ${phase}${suffix}`,
+      attributes: durationMs === undefined ? {} : { durationMs },
+    });
+  }
   return async function (this: This, ...args: Args): Promise<Result> {
-    writeLog(`${operation}: start`);
+    emit('start');
     const startedAt = performance.now();
-
     try {
       const result = await fn.apply(this, args);
-      const durationMs = performance.now() - startedAt;
-      writeLog(`${operation}: success (${durationMs.toFixed(2)} ms)`);
+      emit('success', performance.now() - startedAt);
       return result;
     } catch (error: unknown) {
-      const durationMs = performance.now() - startedAt;
-      writeLog(`${operation}: failure (${durationMs.toFixed(2)} ms)`);
+      emit('failure', performance.now() - startedAt);
       throw error;
     }
   };
-}
-
-function writeLog(message: string): void {
-  try {
-    console.info(message);
-  } catch {
-    // 出力先の失敗で、本体の戻り値や例外を変えない。
-    // この段階では再試行や別の出力先を用意せず、ログの欠落を許容する。
-  }
 }

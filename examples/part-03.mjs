@@ -1,6 +1,15 @@
+import { configure, getConsoleSink } from '@logtape/logtape';
 import console from 'node:console';
 import puppeteer from 'puppeteer';
 import { withBrowserLogging } from '../dist/index.js';
+
+await configure({
+  sinks: { console: getConsoleSink() },
+  loggers: [
+    { category: ['ts-logging-lab'], lowestLevel: 'debug', sinks: ['console'] },
+    { category: ['logtape', 'meta'], lowestLevel: 'error', sinks: ['console'] },
+  ],
+});
 
 const raw = await puppeteer.launch({ headless: true });
 try {
