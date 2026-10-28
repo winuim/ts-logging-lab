@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：開発基盤のみ整備** — 型チェック・単体テスト・ビルド・Lint・CIを用意しています。全12回の機能と各回のタグは未実装です。ロードマップは実装完了を意味しません。
+> **ステータス：開発基盤のみ整備** — 型チェック・単体テスト・ビルド・Lintをローカルで実行できます。全12回の機能と各回のタグは未実装です。ロードマップは実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -109,7 +109,7 @@ npm ci
 | `npm run format`                 | Prettierで整形                                                       |
 | `npm run test:integration`       | 将来のPuppeteer統合テスト専用（現在はテスト未追加のため終了コード1） |
 
-通常の検証は`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`の順に実行します。GitHub Actionsもpushとpull requestで同じ検証を行います。
+通常の検証は`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`の順に実行します。GitHub Actionsは課金しない方針のため使用せず、ワークフローは配置しません。PR前にローカルでこれらの検証を実行し、結果をPRに記録します。
 
 ### 構成と設計判断
 
@@ -119,7 +119,6 @@ tests/unit/                   ブラウザ不要の単体テスト
 tests/integration/            実ブラウザを使う統合テストの追加先
 vitest.config.ts              単体テストのみを収集
 vitest.integration.config.ts  統合テストのみを収集
-.github/workflows/ci.yml       型チェック・単体テスト・ビルド・Lint・整形検査
 ```
 
 - Node.js 24系LTSとnpm 11系を採用し、`.nvmrc`と`packageManager`で検証バージョンを固定します。`engines`と`.npmrc`で異なるメジャーの利用を検出します。
@@ -127,7 +126,7 @@ vitest.integration.config.ts  統合テストのみを収集
 - Node.jsでそのまま実行できるESM（`type: module`、`NodeNext`）を使い、相対importには`.js`拡張子を書きます。ビルドは`tsc`だけで行い、バンドラーや独自ランナーは追加しません。
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
-- Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストと通常CIはこのディレクトリを収集しません。統合テスト・ブラウザ準備・専用CIは実ブラウザを扱う回で追加します。空のテスト群を成功扱いにしません。
+- Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。統合テスト・ローカルでのブラウザ準備は実ブラウザを扱う回で追加します。空のテスト群を成功扱いにしません。
 - Puppeteer・LogTape・OpenTelemetryは、それぞれを使う回でバージョンと最小限の依存を決定します。現時点では導入せず、HOF・Proxy・Adapter等の教材APIも先取りしません。
 - 初期テストは空のエントリーポイントのESM読み込みを確認するものです。第1回でAPIを追加するときに、その回の振る舞いと型のテストへ更新します。
 
