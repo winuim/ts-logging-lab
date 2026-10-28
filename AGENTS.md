@@ -104,9 +104,9 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - GitHub Actionsは課金しない方針のため使用しない。明示的な方針変更の依頼なしにワークフローを追加・有効化しない。検証はローカルで実行してPRに結果を記録する。
 - PR前に`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`を実行する。
 - ブラウザ不要のテストは`tests/unit/`、Puppeteerが必要なテストは`tests/integration/`に置く。単体テストへブラウザ準備を持ち込まない。
-- 現在の統合テストは空で、専用コマンドは終了コード1になる。実ブラウザを扱う回で依存・ローカルでのブラウザ準備を追加する。
-- 現在は第1回の`withLog`・テスト・実行例までを提供する。第2回以降の機能を実装済みとみなさない。
+- 実ブラウザの変更時は`npm run browser:install`でChromeを準備し、`npm run test:integration`と`npm run example:part-02`も実行する。通常の`npm ci`でブラウザを取得しない設定を維持する。
+- 現在は第2回のPage専用`withPageLogging`までを提供する。戻り値の再ラップ・共通Proxy基盤・WeakMap管理等の後続機能を実装済みとみなさない。
 
 ## 未決定事項
 
-Puppeteer・LogTape・OpenTelemetryのバージョンはそれぞれを導入する回で決める。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。
+Puppeteerの採用バージョンはREADMEのセットアップを参照する。LogTape・OpenTelemetryのバージョンはそれぞれを導入する回で決める。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。

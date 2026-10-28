@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第1回の実装を追加** — 非同期関数にログを付与する`withLog`とテスト・実行例を用意しています。第2回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第2回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第3回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -78,7 +78,46 @@ npm run example:part-01
 - ラッパーは`async`関数のため、返すPromise自体の同一性は保持しません。Promiseを返す型の関数が同期的にthrowした場合も、同じ理由でrejectするPromiseになります。同期関数・コンストラクター・オーバーロードやジェネリック関数の呼び出しごとの型相関の完全保持は今回の対象外です。
 - メソッドを渡しても元インスタンスへ自動bindしません。ラッパーを同じオブジェクトのメソッドとして使うか、`.call(receiver, ...)`で`this`を渡します。自動的なインスタンスのラップは第2回以降で扱います。
 - 出力は最小の`console.info`呼び出しです。引数・戻り値・生の例外を出力しません。出力が同期的にthrowしても本体の成功・失敗を変えず、ログの欠落を許容します。プロセス終了や非同期の出力障害を回復する仕組みはありません。
-- Adapter・イベントカタログ・ロギング基盤・Puppeteer連携は追加していません。同じ操作名の並行ログを識別するIDもまだありません。各呼び出しの計測値は独立しています。
+- 第1回のタグにはAdapter・イベントカタログ・ロギング基盤・Puppeteer連携は含まれていません。同じ操作名の並行ログを識別するIDもまだありません。各呼び出しの計測値は独立しています。
+
+## 第2回：Proxy・Reflect・thisとprivate
+
+`withPageLogging(page)`で実PageをProxy化します。ログ対象は`goto`だけです。`goto`は第1回の`withLog`で包み、開始・成功・失敗・処理時間を出力します。URL・引数・応答・生のエラーはログに含めません。
+
+```ts
+import type { Page } from 'puppeteer';
+import { withPageLogging } from './src/index.js';
+
+export async function navigate(raw: Page) {
+  const page = withPageLogging(raw);
+  const response = await page.goto('about:blank'); // HTTPResponse | null
+  const keyboard = page.keyboard; // getterのthisも実Page
+  const value = await page.evaluate(() => 6 * 7); // 対象外メソッドも動く
+  return { response, keyboard, value };
+}
+```
+
+`Reflect.get(target, property, target)`でgetterのreceiverを実体へ固定し、ログ対象外も含め関数値を実体へbindして返します。setterも`Reflect.set(target, property, value, target)`で実体を使います。これにより`#private`やnative内部スロットがProxyを実体と取り違える問題を避けます。
+
+### 今回の境界
+
+- 直接の呼び出し結果・拒否理由は同じ値を返します。ログ対象の`goto`には第1回と同じasyncラッパーの制約があり、Promise自体の同一性や同期throwの境界は保ちません。対象外メソッドにはasyncラッパーを付けないため、同期throwは同期throwのままです。
+- `withPageLogging<T extends Pick<Page, 'goto'>>(page: T): T`はPage専用の小さな構造契約です。単体テストでは同じ契約を持つfixtureを使い、統合テストでは実Pageを使います。汎用のメソッド登録・型アサーション・共通Proxy基盤は追加しません。
+- キーボードなどの子オブジェクト・メソッドの戻り値は再ラップしません。`this`を返すメソッドも実体を返すので、その先のチェーンはProxyを通りません。第3回以降の検討対象です。
+- Proxyは元インスタンスとは別物です。メソッドは取得ごとにbindされるため関数の同一性を保たず、constructor等の関数値もbind対象になります。二重ラップ防止・キャッシュ・`unwrap`は未実装です。
+- 対象は通常の未改変のPageです。書き換え禁止かつ再定義禁止の独自関数プロパティはProxyの不変条件により差し替えられず、適用対象外です。Proxyを完全に透明にする設計ではありません。
+
+### ブラウザを使う検証
+
+```sh
+npm run browser:install
+npm run test:integration
+npm run example:part-02
+```
+
+Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用します。`browser:install`はブラウザをPuppeteerのキャッシュへ取得します。ブラウザを起動できるローカル環境で実行してください。実行例・テストは`about:blank`・`data:` URL・ローカルHTMLを使い、外部Webサイトへアクセスしません。
+
+通常の`npm ci`では`.puppeteerrc.cjs`の`skipDownload: true`でブラウザを取得しません。ブラウザなしの単体テストと、実ブラウザの統合テストは引き続き分離しています。GitHub Actionsは使用しません。
 
 ## イベントカタログの方針（第6回）
 
@@ -126,28 +165,30 @@ npm ci
 
 ### 実行コマンド
 
-| コマンド                         | 用途                                                                 |
-| -------------------------------- | -------------------------------------------------------------------- |
-| `npm run typecheck`              | ソース・テスト・Vitest設定の型チェック                               |
-| `npm test` / `npm run test:unit` | ブラウザ不要の単体テストを一度実行                                   |
-| `npm run test:watch`             | 単体テストの変更監視                                                 |
-| `npm run build`                  | `src/`を`dist/`へESM・型宣言・ソースマップとして出力                 |
-| `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし）      |
-| `npm run example:part-01`        | 第1回の成功・失敗の実行例                                            |
-| `npm run lint`                   | 型情報を使ったESLint検査（警告も失敗扱い）                           |
-| `npm run format:check`           | Prettierの整形検査                                                   |
-| `npm run format`                 | Prettierで整形                                                       |
-| `npm run test:integration`       | 将来のPuppeteer統合テスト専用（現在はテスト未追加のため終了コード1） |
+| コマンド                         | 用途                                                            |
+| -------------------------------- | --------------------------------------------------------------- |
+| `npm run typecheck`              | ソース・テスト・Vitest設定の型チェック                          |
+| `npm test` / `npm run test:unit` | ブラウザ不要の単体テストを一度実行                              |
+| `npm run test:watch`             | 単体テストの変更監視                                            |
+| `npm run build`                  | `src/`を`dist/`へESM・型宣言・ソースマップとして出力            |
+| `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし） |
+| `npm run example:part-01`        | 第1回の成功・失敗の実行例                                       |
+| `npm run browser:install`        | Puppeteerが指定するChromeを取得                                 |
+| `npm run example:part-02`        | 実Pageをラップする第2回の実行例                                 |
+| `npm run lint`                   | 型情報を使ったESLint検査（警告も失敗扱い）                      |
+| `npm run format:check`           | Prettierの整形検査                                              |
+| `npm run format`                 | Prettierで整形                                                  |
+| `npm run test:integration`       | 実Pageによる統合テスト（事前にbrowser:installが必要）           |
 
 通常の検証は`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`の順に実行します。GitHub Actionsは課金しない方針のため使用せず、ワークフローは配置しません。PR前にローカルでこれらの検証を実行し、結果をPRに記録します。
 
 ### 構成と設計判断
 
 ```text
-src/                          教材実装（index.tsからwithLogを公開）
+src/                          教材実装（withLog・withPageLoggingを公開）
 examples/                     ビルド済みコードを使う小さな実行例
 tests/unit/                   ブラウザ不要の単体テスト
-tests/integration/            実ブラウザを使う統合テストの追加先
+tests/integration/            実Pageによるprivate・操作・成功・失敗の統合テスト
 vitest.config.ts              単体テストのみを収集
 vitest.integration.config.ts  統合テストのみを収集
 ```
@@ -157,13 +198,13 @@ vitest.integration.config.ts  統合テストのみを収集
 - Node.jsでそのまま実行できるESM（`type: module`、`NodeNext`）を使い、相対importには`.js`拡張子を書きます。ビルドは`tsc`だけで行い、バンドラーや独自ランナーは追加しません。
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
-- Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。統合テスト・ローカルでのブラウザ準備は実ブラウザを扱う回で追加します。空のテスト群を成功扱いにしません。
-- Puppeteer・LogTape・OpenTelemetryは、それぞれを使う回でバージョンと最小限の依存を決定します。現時点では導入せず、Proxy・Adapter等の後続回の教材APIも先取りしません。
+- Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
+- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTape・OpenTelemetryは未導入で、使用する回で決定します。
 - 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
 
-READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。第1回の実行例はこのリポジトリの公開APIを直接使用し、テストと合わせて動作確認します。確認時点の`zenn-contents`既定ブランチに対応記事・本の草稿はなく、既存記事とのAPI照合対象はありませんでした。Zennの記事作成・公開は行わず、記事を追加する際に対応タグ・API・実行結果を照合します。
+READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zennの[第1回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-01.md)は`part-01`に対応します。[第2回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-02.md)も今回の実装と照合して別PRで追加します。記事は`published: false`を維持し、対応タグは実装のレビュー・マージ完了後に作成します。
 
 ## 関連
 
