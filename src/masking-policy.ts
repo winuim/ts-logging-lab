@@ -54,6 +54,8 @@ const reserved = new Set([
   'level',
   'message',
   'durationMs',
+  'resourceId',
+  'resourceKind',
   'traceId',
   'spanId',
 ]);

@@ -1,3 +1,4 @@
+import { captureResourceAttributes } from './resource-context.js';
 import {
   beforeContext,
   afterContext,
@@ -39,6 +40,11 @@ export function withLog<This, Args extends unknown[], Result>(
     emitSafely(adapter, event);
   }
   return async function (this: This, ...args: Args): Promise<Result> {
+    const resourceAttributes = captureResourceAttributes(
+      options.resources,
+      options.resource ?? this,
+      options.resourceKind,
+    );
     const attributes = maskArguments(
       options.argumentPolicy ?? defaultArgumentPolicy,
       operation,
@@ -46,7 +52,7 @@ export function withLog<This, Args extends unknown[], Result>(
     );
     const context = beforeContext(operation, args);
     const before = extractSafely(() => options.extractor?.before?.(context));
-    emit('start', { ...before, ...attributes });
+    emit('start', { ...before, ...attributes, ...resourceAttributes });
     const startedAt = performance.now();
     try {
       const result = await fn.apply(this, args);
@@ -54,13 +60,21 @@ export function withLog<This, Args extends unknown[], Result>(
       const after = extractSafely(() =>
         options.extractor?.after?.(afterContext(context, result)),
       );
-      emit('success', { ...before, ...after, ...attributes }, durationMs);
+      emit(
+        'success',
+        { ...before, ...after, ...attributes, ...resourceAttributes },
+        durationMs,
+      );
       return result;
     } catch (error: unknown) {
       const durationMs = performance.now() - startedAt;
       const failure = Object.freeze({ ...context, failed: true });
       const extra = extractSafely(() => options.extractor?.error?.(failure));
-      emit('failure', { ...before, ...extra, ...attributes }, durationMs);
+      emit(
+        'failure',
+        { ...before, ...extra, ...attributes, ...resourceAttributes },
+        durationMs,
+      );
       throw error;
     }
   };

@@ -1,3 +1,4 @@
+import type { ResourceContext, ResourceKind } from './resource-context.js';
 import type { ContextExtractor } from './context-extractor.js';
 import type { ArgumentPolicy } from './masking-policy.js';
 import type { EventId, LevelOverrides } from './event-catalog.js';
@@ -19,6 +20,9 @@ export interface LogAdapter {
   emit(event: LogEvent): void | Promise<void>;
 }
 export interface LogOptions<Result = unknown> {
+  resources?: ResourceContext;
+  resource?: object;
+  resourceKind?: ResourceKind;
   extractor?: ContextExtractor<Result>;
   argumentPolicy?: ArgumentPolicy;
   levelOverrides?: LevelOverrides;

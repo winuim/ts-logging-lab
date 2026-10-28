@@ -39,7 +39,7 @@ export function createLoggingProxy<T extends object>(
         ? withLog(
             `${options.name}.${String(property)}`,
             (...args: unknown[]) => Promise.resolve(call(...args)),
-            options,
+            { ...options, resource: target },
           )
         : call;
       const wrapped = (...args: unknown[]): unknown => {
