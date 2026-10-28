@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：開発基盤のみ整備** — 型チェック・単体テスト・ビルド・Lintをローカルで実行できます。全12回の機能と各回のタグは未実装です。ロードマップは実装完了を意味しません。
+> **ステータス：第1回の実装を追加** — 非同期関数にログを付与する`withLog`とテスト・実行例を用意しています。第2回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -50,6 +50,35 @@
 | 12  | 品質検証                  | 正常・異常・秘匿・並列・性能のテストと計測                                   | `part-12`        |
 
 各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
+
+## 第1回：高階関数とジェネリクス
+
+`src/index.ts`から`withLog(operation, fn)`を公開します。操作名は秘密情報を含まない固定文字列にしてください。
+
+```ts
+import { withLog } from './src/index.js';
+
+const greet = withLog('greet', (name: string) =>
+  Promise.resolve(`Hello, ${name}!`),
+);
+const message = await greet('TypeScript'); // Promise<string>、messageはstring
+```
+
+`Args`で引数のタプル、`Result`でPromiseの解決値、`This`で呼び出し時の`this`を受け取り、通常の関数を返す高階関数です。引数・結果・拒否理由のオブジェクトはコピーせず渡します。開始を出力してから元関数を一度呼び、成功または失敗を出力します。`performance.now()`で開始ログの後から元処理の完了までを計測し、終端ログにミリ秒で表示します。
+
+```sh
+npm run example:part-01
+```
+
+このコマンドはビルド後に`examples/part-01.mjs`を実行します。開始・成功・失敗と処理時間を実際に出力し、失敗は呼び出し側で処理します。ブラウザや追加依存は不要です。計測値は実行環境によって変わります。
+
+### 保持する振る舞いと現在の制約
+
+- 対象は`Promise`を返す関数です。引数の必須・省略可能・可変長の型、戻り値の型、明示された`this`型を保持します。元処理の解決値・拒否理由はそのまま返します。
+- ラッパーは`async`関数のため、返すPromise自体の同一性は保持しません。Promiseを返す型の関数が同期的にthrowした場合も、同じ理由でrejectするPromiseになります。同期関数・コンストラクター・オーバーロードやジェネリック関数の呼び出しごとの型相関の完全保持は今回の対象外です。
+- メソッドを渡しても元インスタンスへ自動bindしません。ラッパーを同じオブジェクトのメソッドとして使うか、`.call(receiver, ...)`で`this`を渡します。自動的なインスタンスのラップは第2回以降で扱います。
+- 出力は最小の`console.info`呼び出しです。引数・戻り値・生の例外を出力しません。出力が同期的にthrowしても本体の成功・失敗を変えず、ログの欠落を許容します。プロセス終了や非同期の出力障害を回復する仕組みはありません。
+- Adapter・イベントカタログ・ロギング基盤・Puppeteer連携は追加していません。同じ操作名の並行ログを識別するIDもまだありません。各呼び出しの計測値は独立しています。
 
 ## イベントカタログの方針（第6回）
 
@@ -103,7 +132,8 @@ npm ci
 | `npm test` / `npm run test:unit` | ブラウザ不要の単体テストを一度実行                                   |
 | `npm run test:watch`             | 単体テストの変更監視                                                 |
 | `npm run build`                  | `src/`を`dist/`へESM・型宣言・ソースマップとして出力                 |
-| `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（現時点では出力なし）         |
+| `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし）      |
+| `npm run example:part-01`        | 第1回の成功・失敗の実行例                                            |
 | `npm run lint`                   | 型情報を使ったESLint検査（警告も失敗扱い）                           |
 | `npm run format:check`           | Prettierの整形検査                                                   |
 | `npm run format`                 | Prettierで整形                                                       |
@@ -114,7 +144,8 @@ npm ci
 ### 構成と設計判断
 
 ```text
-src/                          教材実装（現在は空のindex.tsのみ）
+src/                          教材実装（index.tsからwithLogを公開）
+examples/                     ビルド済みコードを使う小さな実行例
 tests/unit/                   ブラウザ不要の単体テスト
 tests/integration/            実ブラウザを使う統合テストの追加先
 vitest.config.ts              単体テストのみを収集
@@ -127,12 +158,12 @@ vitest.integration.config.ts  統合テストのみを収集
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
 - Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。統合テスト・ローカルでのブラウザ準備は実ブラウザを扱う回で追加します。空のテスト群を成功扱いにしません。
-- Puppeteer・LogTape・OpenTelemetryは、それぞれを使う回でバージョンと最小限の依存を決定します。現時点では導入せず、HOF・Proxy・Adapter等の教材APIも先取りしません。
-- 初期テストは空のエントリーポイントのESM読み込みを確認するものです。第1回でAPIを追加するときに、その回の振る舞いと型のテストへ更新します。
+- Puppeteer・LogTape・OpenTelemetryは、それぞれを使う回でバージョンと最小限の依存を決定します。現時点では導入せず、Proxy・Adapter等の後続回の教材APIも先取りしません。
+- 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
 
-READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。記事に対応する教材API・`part-XX`タグはまだなく、Zenn草稿の更新・公開は今回の対象外です。各回の実装時にコード・API・記事を照合します。
+READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。第1回の実行例はこのリポジトリの公開APIを直接使用し、テストと合わせて動作確認します。確認時点の`zenn-contents`既定ブランチに対応記事・本の草稿はなく、既存記事とのAPI照合対象はありませんでした。Zennの記事作成・公開は行わず、記事を追加する際に対応タグ・API・実行結果を照合します。
 
 ## 関連
 

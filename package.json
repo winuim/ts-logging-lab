@@ -18,7 +18,8 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "example:part-01": "npm run build && node examples/part-01.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -105,7 +105,7 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - PR前に`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`を実行する。
 - ブラウザ不要のテストは`tests/unit/`、Puppeteerが必要なテストは`tests/integration/`に置く。単体テストへブラウザ準備を持ち込まない。
 - 現在の統合テストは空で、専用コマンドは終了コード1になる。実ブラウザを扱う回で依存・ローカルでのブラウザ準備を追加する。
-- 現在は開発基盤のみ。空のエントリーポイントを教材APIの実装済みとみなさない。
+- 現在は第1回の`withLog`・テスト・実行例までを提供する。第2回以降の機能を実装済みとみなさない。
 
 ## 未決定事項
 
