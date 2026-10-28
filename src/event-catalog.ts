@@ -5,7 +5,7 @@ interface Definition {
   category: string;
   defaultLevel: LogLevel;
   message: string;
-  phase: 'start' | 'success' | 'failure';
+  phase: LogEvent['phase'];
 }
 
 export const eventCatalog = Object.freeze({
@@ -29,6 +29,34 @@ export const eventCatalog = Object.freeze({
     defaultLevel: 'error',
     message: 'Operation failed',
     phase: 'failure',
+  }),
+  'http.response': Object.freeze({
+    eventId: 'http.response',
+    category: 'http',
+    defaultLevel: 'info',
+    message: 'HTTP response observed',
+    phase: 'diagnostic',
+  }),
+  'http.failed': Object.freeze({
+    eventId: 'http.failed',
+    category: 'http',
+    defaultLevel: 'warning',
+    message: 'HTTP request failed',
+    phase: 'diagnostic',
+  }),
+  'page.console': Object.freeze({
+    eventId: 'page.console',
+    category: 'page',
+    defaultLevel: 'info',
+    message: 'Page console observed',
+    phase: 'diagnostic',
+  }),
+  'page.exception': Object.freeze({
+    eventId: 'page.exception',
+    category: 'page',
+    defaultLevel: 'error',
+    message: 'Page exception observed',
+    phase: 'diagnostic',
   }),
 } satisfies Record<string, Definition>);
 

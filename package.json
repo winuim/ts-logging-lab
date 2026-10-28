@@ -26,7 +26,8 @@
     "example:part-07": "npm run build && node examples/part-07.mjs",
     "example:part-08": "npm run build && node examples/part-08.mjs",
     "example:part-09": "npm run build && node examples/part-09.mjs",
-    "example:part-10": "npm run build && node examples/part-10.mjs"
+    "example:part-10": "npm run build && node examples/part-10.mjs",
+    "example:part-11": "npm run build && node examples/part-11.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

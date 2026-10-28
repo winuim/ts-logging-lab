@@ -9,7 +9,7 @@ import { defaultArgumentPolicy, maskArguments } from './masking-policy.js';
 import { createLogEvent, parseLevelOverrides } from './event-catalog.js';
 import type { EventId } from './event-catalog.js';
 import { emitSafely } from './log-event.js';
-import type { LogAttributes, LogEvent, LogOptions } from './log-event.js';
+import type { LogAttributes, OperationPhase, LogOptions } from './log-event.js';
 import { LogTapeAdapter } from './logtape-adapter.js';
 
 const defaultAdapter = new LogTapeAdapter();
@@ -26,9 +26,9 @@ export function withLog<This, Args extends unknown[], Result>(
     start: 'operation.start',
     success: 'operation.success',
     failure: 'operation.failure',
-  } satisfies Record<LogEvent['phase'], EventId>;
+  } satisfies Record<OperationPhase, EventId>;
   function emit(
-    phase: LogEvent['phase'],
+    phase: OperationPhase,
     attributes: LogAttributes,
     durationMs?: number,
   ): void {
