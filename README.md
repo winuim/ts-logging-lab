@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第11回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第12回の総合検証・性能計測は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第12回まで実装** — 高階関数からProxy、構造化イベント、マスキング、フック、リソース識別、OpenTelemetry相関、診断購読、横断テストと性能計測まで用意しています。各回のタグはレビュー・マージ完了後に作成します。記事は未公開草稿として別管理し、教材の公開範囲・ライセンスは別途判断します。
 
 ## このプロジェクトで学ぶこと
 
@@ -250,3 +250,24 @@ WeakMapでProxyと実体を対応付け、二重ラップとメソッド参照�
 ## 第11回：イベント購読と診断ログ
 
 `subscribeDiagnostics(page, { resources })`でHTTP応答・通信失敗・console・pageerrorを購読し、返された関数で解除します。二重登録を抑え、closeでも解除します。HTTP404と操作成功は別のイベントとして扱い、生のURL・本文・ヘッダ・例外メッセージは取得しません。`npm run example:part-11`はローカルHTTPサーバーで404とconsoleを観測します。発火時の相関、解除責任と許可属性は[第11回](docs/part-11.md)を参照してください。
+
+## 第12回：品質検証と性能計測
+
+単体64件・実Chrome統合12件で、元処理の振る舞い、機密非出力、並列相関、購読解除を検証します。`npm run benchmark -- /private/tmp/ts-logging-benchmark.json`でベースライン/HOF/Proxy/マスキング/属性抽出/ロガー有効無効を固定条件で比較できます。[測定条件・実測値・制約](docs/part-12.md)と[生の結果](benchmarks/results/reference.json)を参照してください。GitHub Actionsは実行しません。
+
+### 機能を探す
+
+| API                                              | 導入回 | 役割                         |
+| ------------------------------------------------ | ------ | ---------------------------- |
+| `withLog`                                        | 01     | 型付き非同期関数へのログ付与 |
+| `withPageLogging`                                | 02     | 実Pageの操作をProxy化        |
+| `createLoggingProxy`                             | 03     | 複数対象と戻り値へ共通化     |
+| `unwrap`                                         | 04     | 実体の取り出しと同一性       |
+| `LogEvent` / `LogAdapter` / `LogTapeAdapter`     | 05     | イベントと出力手段の境界     |
+| `eventCatalog` / `parseLevelOverrides`           | 06     | ID・固定文言・レベルの管理   |
+| `createArgumentPolicy` / `createPuppeteerPolicy` | 07     | 操作別の安全な属性選択       |
+| `ContextExtractor` / `navigationContext`         | 08     | 型付き文脈と安全なURL属性    |
+| `ResourceContext`                                | 09     | 実リソースの識別             |
+| `openTelemetryCorrelation`                       | 10     | 有効なSpanContextの参照      |
+| `subscribeDiagnostics`                           | 11     | 診断イベントの購読と解除     |
+| `npm run benchmark`                              | 12     | 固定条件による実測比較       |

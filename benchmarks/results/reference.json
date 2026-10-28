@@ -1,0 +1,97 @@
+{
+  "measuredAt": "2026-10-28T21:23:42.599Z",
+  "environment": {
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "logicalCpus": 8,
+    "execArgv": []
+  },
+  "source": {
+    "baseCommit": "61e35f2f0f2fe3eded8c6d4e46f249bc2ec52f09",
+    "scriptSha256": "6b61f3fb22780ab3182636427cf431b3ecd3c8eeb18fa7fef66e472404107558",
+    "lockfileSha256": "10fd3f2a692f3263522b277e052d1c6882f6b782d5c4dc667f0460c7a71eaad4"
+  },
+  "conditions": {
+    "iterations": 5000,
+    "warmupIterations": 1000,
+    "repetitions": 7,
+    "serialAwait": true,
+    "units": "nanoseconds per completed call",
+    "order": "rotated by round",
+    "enabledSink": "LogTape getStreamSink + JSON Lines formatter + discard WritableStream; drain included",
+    "excluded": "configuration, wrapper construction, real browser, disk/network I/O, OTel propagation",
+    "caveat": "single process; min/max are sample range, not confidence bounds; no performance guarantee"
+  },
+  "checksum": 216000,
+  "results": [
+    {
+      "name": "baseline",
+      "samplesNsPerCall": [
+        72.90820000000053, 48.20000000000846, 46.68340000000626,
+        58.25839999999971, 73.19999999999709, 51.45840000000135,
+        57.59160000000065
+      ],
+      "min": 46.68340000000626,
+      "median": 57.59160000000065,
+      "max": 73.19999999999709
+    },
+    {
+      "name": "hof-disabled",
+      "samplesNsPerCall": [
+        1643.349999999998, 1494.0833999999995, 1365.4165999999918,
+        1330.2999999999997, 1441.1416000000145, 1236.6500000000087,
+        1372.0667999999932
+      ],
+      "min": 1236.6500000000087,
+      "median": 1372.0667999999932,
+      "max": 1643.349999999998
+    },
+    {
+      "name": "proxy-disabled",
+      "samplesNsPerCall": [
+        1683.8167999999996, 1654.3582000000015, 1631.2749999999937,
+        1394.6081999999933, 1767.016599999988, 1367.6249999999982,
+        1603.4583999999995
+      ],
+      "min": 1367.6249999999982,
+      "median": 1631.2749999999937,
+      "max": 1767.016599999988
+    },
+    {
+      "name": "masking-disabled",
+      "samplesNsPerCall": [
+        1411.325000000005, 1346.333199999998, 1427.2583999999938,
+        1279.6500000000037, 1238.0249999999933, 1451.7749999999978,
+        1300.8000000000038
+      ],
+      "min": 1238.0249999999933,
+      "median": 1346.333199999998,
+      "max": 1451.7749999999978
+    },
+    {
+      "name": "extractor-disabled",
+      "samplesNsPerCall": [
+        1783.1999999999994, 1536.2500000000068, 1495.2999999999975,
+        1564.4000000000005, 1552.6500000000055, 1485.0415999999996,
+        1533.0749999999853
+      ],
+      "min": 1485.0415999999996,
+      "median": 1536.2500000000068,
+      "max": 1783.1999999999994
+    },
+    {
+      "name": "logger-enabled",
+      "samplesNsPerCall": [
+        13076.883400000002, 11722.325, 10737.816800000008, 10235.2168,
+        10344.775000000005, 10872.25840000001, 10364.041599999995
+      ],
+      "min": 10235.2168,
+      "median": 10737.816800000008,
+      "max": 13076.883400000002
+    }
+  ]
+}
