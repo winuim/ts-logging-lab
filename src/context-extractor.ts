@@ -86,7 +86,12 @@ export function navigationContext(
   publicOrigins: readonly string[] = [],
 ): ContextExtractor {
   const origins = Object.freeze([...publicOrigins]);
-  return { before: (context) => safeUrlAttributes(context.args[0], origins) };
+  return {
+    before: (context) =>
+      context.operation === 'page.goto'
+        ? safeUrlAttributes(context.args[0], origins)
+        : {},
+  };
 }
 export function safeSelectorAttributes(
   value: unknown,

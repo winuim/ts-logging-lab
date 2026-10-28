@@ -113,6 +113,12 @@ test('誤ったasyncフックの拒否を処理し、Policyの秘匿属性を上
 test('許可originだけを返し、userinfo/path/query/fragmentを捨てる', async () => {
   const url =
     'https://user:dummy-secret@example.test/private?token=dummy-secret#secret';
+  expect(
+    navigationContext(['https://example.test']).before?.({
+      operation: 'keyboard.type',
+      args: [url],
+    }),
+  ).toEqual({});
   expect(safeUrlAttributes(url)).toEqual({ origin: REDACTED });
   expect(safeUrlAttributes(url, ['https://example.test'])).toEqual({
     origin: 'https://example.test',
