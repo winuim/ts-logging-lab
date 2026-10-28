@@ -1,7 +1,8 @@
+import { defaultArgumentPolicy, maskArguments } from './masking-policy.js';
 import { createLogEvent, parseLevelOverrides } from './event-catalog.js';
 import type { EventId } from './event-catalog.js';
 import { emitSafely } from './log-event.js';
-import type { LogEvent, LogOptions } from './log-event.js';
+import type { LogAttributes, LogEvent, LogOptions } from './log-event.js';
 import { LogTapeAdapter } from './logtape-adapter.js';
 
 const defaultAdapter = new LogTapeAdapter();
@@ -19,24 +20,33 @@ export function withLog<This, Args extends unknown[], Result>(
     success: 'operation.success',
     failure: 'operation.failure',
   } satisfies Record<LogEvent['phase'], EventId>;
-  function emit(phase: LogEvent['phase'], durationMs?: number): void {
+  function emit(
+    phase: LogEvent['phase'],
+    attributes: LogAttributes,
+    durationMs?: number,
+  ): void {
     const event = createLogEvent(
       ids[phase],
       operation,
-      durationMs === undefined ? {} : { durationMs },
+      durationMs === undefined ? attributes : { ...attributes, durationMs },
       overrides,
     );
     emitSafely(adapter, event);
   }
   return async function (this: This, ...args: Args): Promise<Result> {
-    emit('start');
+    const attributes = maskArguments(
+      options.argumentPolicy ?? defaultArgumentPolicy,
+      operation,
+      args,
+    );
+    emit('start', attributes);
     const startedAt = performance.now();
     try {
       const result = await fn.apply(this, args);
-      emit('success', performance.now() - startedAt);
+      emit('success', attributes, performance.now() - startedAt);
       return result;
     } catch (error: unknown) {
-      emit('failure', performance.now() - startedAt);
+      emit('failure', attributes, performance.now() - startedAt);
       throw error;
     }
   };
