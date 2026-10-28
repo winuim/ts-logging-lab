@@ -43,9 +43,9 @@
 | 05 | 構造化イベントとAdapter | ロガー非依存の`LogEvent`・`LogAdapter`と単一の`LogTapeAdapter` | `part-05` |
 | 06 | イベントカタログ | ID・カテゴリ・既定レベル・固定メッセージ、レベル上書き | `part-06` |
 | 07 | 拡張可能なマスキング | 操作別ルール、既定の安全方針、テスト | `part-07` |
-| 08 | OpenTelemetryとのログ相関 | アクティブSpanのtraceId/spanIdを取得してLogEventに付与（独自生成・伝播なし） | `part-08` |
+| 08 | 型安全なフック | ContextExtractorで操作前後・失敗時の安全な属性を抽出 | `part-08` |
 | 09 | リソース識別とWeakMap | Browser/Page等の識別情報の関連付け | `part-09` |
-| 10 | 型安全なフック | ContextExtractorで操作前後・失敗時の属性を抽出 | `part-10` |
+| 10 | OpenTelemetryとのログ相関 | アクティブSpanのtraceId/spanIdを取得してLogEventに付与（独自生成・伝播なし） | `part-10` |
 | 11 | イベント購読と診断ログ | HTTP/console/ページ例外等の診断イベントと購読解除 | `part-11` |
 | 12 | 品質検証 | 正常・異常・秘匿・並列・性能のテストと計測 | `part-12` |
 
@@ -64,7 +64,7 @@
 
 `LogEvent`と`LogAdapter`はロガーに依存しない小さな契約とし、具体的な接続実装は`LogTapeAdapter`だけを用意します。LogTapeはフィルタリング、整形、Sink、出力先を担当します。Pinoなどへの差し替えは可能性として説明しますが、教材に別のアダプタは追加しません。
 
-## OpenTelemetry連携の方針（第8回）
+## OpenTelemetry連携の方針（第10回）
 
 **OpenTelemetryの標準API/SDKにtraceId・spanIdの生成、Spanの親子管理、非同期コンテキスト伝播を任せます。** 自前の`AsyncLocalStorage`ベースのContextManagerやトレースID生成器は作りません。第8回ではアクティブSpanから有効なSpanContextを取得し、ログの構造化属性に安全に付与する**薄い連携部分**を実装・テストします。Spanがない場合を許容し、Pino/LogTape固有の機能に依存しない形にします。教材の主題はOpenTelemetry SDKの再実装でも、全機能の解説でもありません。
 
