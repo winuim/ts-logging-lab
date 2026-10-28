@@ -25,10 +25,13 @@
     "example:part-03": "npm run build && node examples/part-03.mjs",
     "example:part-07": "npm run build && node examples/part-07.mjs",
     "example:part-08": "npm run build && node examples/part-08.mjs",
-    "example:part-09": "npm run build && node examples/part-09.mjs"
+    "example:part-09": "npm run build && node examples/part-09.mjs",
+    "example:part-10": "npm run build && node examples/part-10.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@opentelemetry/context-async-hooks": "3.0.0",
+    "@opentelemetry/sdk-trace": "3.0.0",
     "@types/node": "24.19.2",
     "eslint": "10.13.0",
     "prettier": "3.9.10",
@@ -38,6 +41,7 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
-    "@logtape/logtape": "2.4.2"
+    "@logtape/logtape": "2.4.2",
+    "@opentelemetry/api": "1.10.0"
   }
 }

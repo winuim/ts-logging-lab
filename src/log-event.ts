@@ -1,3 +1,4 @@
+import type { CorrelationProvider } from './correlation.js';
 import type { ResourceContext, ResourceKind } from './resource-context.js';
 import type { ContextExtractor } from './context-extractor.js';
 import type { ArgumentPolicy } from './masking-policy.js';
@@ -20,6 +21,7 @@ export interface LogAdapter {
   emit(event: LogEvent): void | Promise<void>;
 }
 export interface LogOptions<Result = unknown> {
+  correlation?: CorrelationProvider;
   resources?: ResourceContext;
   resource?: object;
   resourceKind?: ResourceKind;

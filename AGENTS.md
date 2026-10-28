@@ -109,4 +109,4 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 
 ## 未決定事項
 
-Puppeteerの採用バージョンはREADMEのセットアップを参照する。LogTapeの採用バージョンもREADMEとpackage.jsonを参照する。OpenTelemetryのバージョンは導入する回で決める。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。
+Puppeteerの採用バージョンはREADMEのセットアップを参照する。LogTapeの採用バージョンもREADMEとpackage.jsonを参照する。OpenTelemetry API/SDKの採用バージョンもREADMEとpackage.jsonを参照する。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。

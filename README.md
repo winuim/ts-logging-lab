@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第9回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第10回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第10回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第11回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -242,3 +242,7 @@ WeakMapでProxyと実体を対応付け、二重ラップとメソッド参照�
 ## 第9回の追加
 
 `ResourceContext`を`resources`へ渡して実Browser/Context/Page等に安定したローカルIDを付けます。Proxyと実体は同じIDです。[寿命・分類・IDの範囲](docs/part-09.md)を参照してください。`npm run example:part-09`で複数Pageの識別を確認できます。traceId/spanIdとは別物です。
+
+## 第10回：OpenTelemetryとのログ相関
+
+`LogOptions.correlation`へ`openTelemetryCorrelation`を渡すと、操作開始時の有効なSpanContextからtraceId/spanIdを読み、全フェーズに付けます。Span不在時は省略します。ID生成と非同期伝播は公式SDKへ任せます。API 1.10.0を実行依存、SDK/context-async-hooks 3.0.0を例・テストの開発依存として採用します。`npm run example:part-10`で並列Spanの例を実行できます。SDKをアプリで登録する責務と境界は[第10回](docs/part-10.md)を参照してください。

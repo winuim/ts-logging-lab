@@ -50,3 +50,6 @@ export type {
 export { ResourceContext } from './resource-context.js';
 export type { ResourceKind, ResourceDescription } from './resource-context.js';
 export { withBrowserContextLogging } from './with-page-logging.js';
+
+export { openTelemetryCorrelation } from './opentelemetry-correlation.js';
+export type { Correlation, CorrelationProvider } from './correlation.js';

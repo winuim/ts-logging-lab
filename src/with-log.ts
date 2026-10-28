@@ -1,3 +1,4 @@
+import { captureCorrelation } from './correlation.js';
 import { captureResourceAttributes } from './resource-context.js';
 import {
   beforeContext,
@@ -40,6 +41,7 @@ export function withLog<This, Args extends unknown[], Result>(
     emitSafely(adapter, event);
   }
   return async function (this: This, ...args: Args): Promise<Result> {
+    const correlation = captureCorrelation(options.correlation);
     const resourceAttributes = captureResourceAttributes(
       options.resources,
       options.resource ?? this,
@@ -52,7 +54,12 @@ export function withLog<This, Args extends unknown[], Result>(
     );
     const context = beforeContext(operation, args);
     const before = extractSafely(() => options.extractor?.before?.(context));
-    emit('start', { ...before, ...attributes, ...resourceAttributes });
+    emit('start', {
+      ...before,
+      ...attributes,
+      ...resourceAttributes,
+      ...correlation,
+    });
     const startedAt = performance.now();
     try {
       const result = await fn.apply(this, args);
@@ -62,7 +69,13 @@ export function withLog<This, Args extends unknown[], Result>(
       );
       emit(
         'success',
-        { ...before, ...after, ...attributes, ...resourceAttributes },
+        {
+          ...before,
+          ...after,
+          ...attributes,
+          ...resourceAttributes,
+          ...correlation,
+        },
         durationMs,
       );
       return result;
@@ -72,7 +85,13 @@ export function withLog<This, Args extends unknown[], Result>(
       const extra = extractSafely(() => options.extractor?.error?.(failure));
       emit(
         'failure',
-        { ...before, ...extra, ...attributes, ...resourceAttributes },
+        {
+          ...before,
+          ...extra,
+          ...attributes,
+          ...resourceAttributes,
+          ...correlation,
+        },
         durationMs,
       );
       throw error;
