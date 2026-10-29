@@ -1,6 +1,6 @@
 # 第10回：OpenTelemetryのSpanContextをログへ関連付ける
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-10](https://github.com/winuim/ts-logging-lab/tree/part-10)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-10](https://github.com/winuim/ts-logging-lab/tree/part-10)
 
 このページは`part-10`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

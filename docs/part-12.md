@@ -1,6 +1,6 @@
 # 第12回：横断テストと性能計測
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-12](https://github.com/winuim/ts-logging-lab/tree/part-12)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-12](https://github.com/winuim/ts-logging-lab/tree/part-12)
 
 このページは`part-12`時点の実装・検証・計測結果を説明します。
 
@@ -56,4 +56,4 @@ logger-enabledはLogTape標準getStreamSinkとJSON Lines Formatterを使い、�
 
 ## 残る制約
 
-既存の制約（最初のProxy設定を採用、宣言した非同期メソッドだけをログ化、現在のRealmのPromiseを対象、出力完了を本体の成功条件にしない）を維持する。例は教材用であり、プロダクションの監査ログ完全性や分散計装を保証しない。コードと同梱ドキュメントのライセンスは[LICENSE](../LICENSE)を参照する。Zenn記事は別リポジトリの未公開草稿として管理する。
+既存の制約（最初のProxy設定を採用、宣言した非同期メソッドだけをログ化、現在のRealmのPromiseを対象、出力完了を本体の成功条件にしない）を維持する。例は教材用であり、プロダクションの監査ログ完全性や分散計装を保証しない。コードと同梱ドキュメントのライセンスは[LICENSE](../LICENSE)を参照する。

@@ -1,6 +1,6 @@
 # 第11回：Pageの診断イベントと購読解除
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-11](https://github.com/winuim/ts-logging-lab/tree/part-11)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-11](https://github.com/winuim/ts-logging-lab/tree/part-11)
 
 このページは`part-11`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

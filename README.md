@@ -1,24 +1,26 @@
 # ts-logging-lab
 
-**TypeScriptで「既存の処理にログを付けたい」という小さな要求から、設計を段階的に発展させる教材リポジトリです。**
+English | [日本語](README.ja.md)
 
-高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
+**A 12-part tutorial that develops TypeScript designs step by step, starting with a small request: add logging to existing code.**
 
-> **ステータス：全12回を実装済み** — `main`は完成版です。各回の完成時点は`part-01`〜`part-12`タグで参照できます。Zenn記事は別リポジトリで管理する未公開草稿です。コードと同梱ドキュメントには[MITライセンス](LICENSE)を適用します。
+Learn higher-order functions, Proxy/Reflect, WeakMap, the Adapter pattern, event catalogs, masking, and OpenTelemetry integration through working code and tests. Puppeteer provides practical objects to wrap; the focus is TypeScript implementation and design.
 
-## 目的と対象読者
+> **Status: all 12 parts are implemented.** `main` contains the completed implementation. Tags `part-01` through `part-12` capture each completed lesson. The code and bundled documentation are available under the [MIT License](LICENSE).
 
-TypeScriptの関数・ジェネリクス、Promise/async/awaitの基本を理解し、既存コードにログを追加する設計を学びたい方を対象にしています。Puppeteerの詳しい知識は不要で、最初の実行例はブラウザなしで試せます。教材として設計の変化と制約を示すためのコードです。実サービスへ取り入れる場合は、各回の制約と自分のアプリの機密情報・障害時の要件を確認してください。
+## Purpose and audience
 
-- 既存処理の振る舞いと型を維持しながら、横断的なログ処理を追加する
-- 「何が起きたか」を表すイベントと、「どう出力するか」を分離する
-- ログに残す情報・残さない情報を、操作の文脈から設計する
-- 非同期処理や実オブジェクトの識別情報を、混同せず関連付ける
-- ログ処理が本体の動作・安全性・性能に与える影響をテストする
+This tutorial is for readers familiar with TypeScript functions and generics, Promises, and async/await who want to explore how to add logging to existing code. Detailed Puppeteer knowledge is unnecessary, and the first example runs without a browser. The code illustrates evolving designs and their limits. Before adopting it in a service, review each lesson's constraints and your application's requirements for sensitive data and failures.
 
-## セットアップと最初の実行
+- Add logging across operations while preserving their behavior and types.
+- Separate events describing what happened from the mechanism that outputs them.
+- Decide what to log or omit based on the meaning of an operation.
+- Relate asynchronous context and object identity while keeping their responsibilities distinct.
+- Test the effect of logging on behavior, safety, and performance.
 
-Node.js **24.22.1**（24系LTS）とnpm **11.21.1**を使用します。nvmを使う場合は、次の手順でcloneしてから環境を準備してください。別のバージョン管理ツールでも同じバージョンを指定できます。
+## Setup and first run
+
+Use Node.js **24.22.1** (24.x LTS) and npm **11.21.1**. With nvm, clone the repository and prepare the environment as follows. Other version managers can use the same versions.
 
 ```sh
 git clone https://github.com/winuim/ts-logging-lab.git
@@ -30,67 +32,67 @@ npm ci
 npm run example:part-01
 ```
 
-`npm ci`はコミット済みの`package-lock.json`から依存を再現します。通常のインストールでは`.puppeteerrc.cjs`の`skipDownload: true`によりブラウザを取得しません。
+`npm ci` reproduces dependencies from the committed `package-lock.json`. Regular installation skips browser downloads through `skipDownload: true` in `.puppeteerrc.cjs`.
 
-最初の実行例はブラウザ不要です。開始・成功・失敗のログと、呼び出し側での例外処理を確認できます。`main`の実行例は完成版のAPIを使い、必要なLogTapeの設定も含めています。
+The first example needs no browser. It demonstrates start, success, and failure logs, along with exception handling by the caller. Examples on `main` use the completed API and include the required LogTape configuration.
 
-### ブラウザを使う場合
+### Using a browser
 
-Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用します。ブラウザを起動できるローカル環境で、次を実行してください。
+The project uses Puppeteer **25.16.0** and the Chrome for Testing version selected by its CLI. Run the following in a local environment that can launch a browser:
 
 ```sh
 npm run browser:install
 npm run example:part-02
 ```
 
-ブラウザはPuppeteerのキャッシュへ取得します。実行例・統合テストは`about:blank`・`data:` URL・ローカルHTMLやローカルHTTPサーバーを使用します。
+Chrome is downloaded to Puppeteer's cache. Examples and integration tests use `about:blank`, `data:` URLs, local HTML, and local HTTP servers.
 
-### 構成と採用環境
+### Layout and toolchain
 
 ```text
-src/                          教材実装（公開APIはsrc/index.ts）
-examples/                     ビルド済みコードを使う小さな実行例
-docs/                         全12回の実装・制約・動作差
-benchmarks/                   性能計測スクリプトと参照実測結果
-LICENSE                       コードと同梱ドキュメントのMITライセンス
-tests/unit/                   ブラウザ不要の単体テスト
-tests/integration/            実Pageによるprivate・操作・成功・失敗の統合テスト
-vitest.config.ts              単体テストのみを収集
-vitest.integration.config.ts  統合テストのみを収集
+src/                          Tutorial implementation (public API in src/index.ts)
+examples/                     Small examples using the built code
+docs/                         Implementation, constraints, and changes for all 12 parts
+benchmarks/                   Benchmark script and reference measurements
+LICENSE                       MIT License for the code and bundled documentation
+tests/unit/                   Tests that do not need a browser
+tests/integration/            Real Page tests for private fields, operations, success, and failure
+vitest.config.ts              Collects unit tests only
+vitest.integration.config.ts  Collects integration tests only
 ```
 
-- Node.js 24系LTSとnpm 11系を採用し、`.nvmrc`と`packageManager`で検証バージョンを固定します。`engines`と`.npmrc`で異なるメジャーの利用を検出します。
-- TypeScript **6.0.3**、Vitest **5.0.5**、ESLint **10.13.0**、`@eslint/js` **10.0.1**、typescript-eslint **8.72.1**、Prettier **3.9.10**、`@types/node` **24.19.2**を完全固定しています。間接依存はlockfileで固定します。TypeScriptはtypescript-eslintの対応範囲（`<6.1.0`）に合わせています。
-- Node.jsでそのまま実行できるESM（`type: module`、`NodeNext`）を使い、相対importには`.js`拡張子を書きます。ビルドは`tsc`だけで行い、バンドラーや独自ランナーは追加しません。
-- `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
-- ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
-- Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
-- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTapeは第5回で導入しました。OpenTelemetryは第10回でAPI **1.10.0**、SDK/context-async-hooks **3.0.0**を導入しました。
+- Node.js 24.x LTS and npm 11.x are used. `.nvmrc` and `packageManager` pin the verification versions; `engines` and `.npmrc` detect incompatible major versions.
+- TypeScript **6.0.3**, Vitest **5.0.5**, ESLint **10.13.0**, `@eslint/js` **10.0.1**, typescript-eslint **8.72.1**, Prettier **3.9.10**, and `@types/node` **24.19.2** are pinned exactly. The lockfile pins transitive dependencies. TypeScript stays within typescript-eslint's supported range (`<6.1.0`).
+- The project uses ESM that Node.js can run directly (`type: module`, `NodeNext`), with `.js` extensions in relative imports. Builds use `tsc` alone, without a bundler or custom runner.
+- Type checking enables `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, and checks for unused code and control flow. Tests and configuration files are also type checked; only `src/` is included in the build output.
+- ESLint uses strict rules with type information and prohibits `any`, non-null assertions, and type assertions. Prettier handles formatting.
+- Tests requiring Puppeteer live in `tests/integration/**/*.test.ts` and are excluded from unit test collection. Integration tests and local browser preparation were introduced in part 2. Empty test suites are not treated as successful.
+- Puppeteer **25.16.0** is pinned as a development dependency. The TypeScript libraries include DOM and DOM.Iterable for Page types and DOM references inside `evaluate`; this does not make `window` or `document` available in the Node.js runtime. LogTape was introduced in part 5. OpenTelemetry API **1.10.0** and SDK/context-async-hooks **3.0.0** were introduced in part 10.
 
-設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
+Configuration references: [Node.js release policy](https://github.com/nodejs/Release), [TypeScript configuration](https://www.typescriptlang.org/tsconfig/), and [Vitest guide](https://vitest.dev/guide/).
 
-## 全12回の一覧
+## All 12 parts
 
-説明のリンクから、各回で追加した仕組み・実行例・テスト・制約を確認できます。各回は前回の実装を基に段階的に積み上げています。
+**The detailed lesson documents are in Japanese.** Follow the lesson links for implementation details, examples, tests, and constraints. Each part builds on the previous one.
 
-| 回  | 説明                                         | 主なAPI・コマンド                                | 完成タグ                                                           |
-| --- | -------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| 01  | [高階関数とジェネリクス](docs/part-01.md)    | `withLog`                                        | [`part-01`](https://github.com/winuim/ts-logging-lab/tree/part-01) |
-| 02  | [Proxy・Reflect・this](docs/part-02.md)      | `withPageLogging`                                | [`part-02`](https://github.com/winuim/ts-logging-lab/tree/part-02) |
-| 03  | [Proxyの共通化](docs/part-03.md)             | `createLoggingProxy`                             | [`part-03`](https://github.com/winuim/ts-logging-lab/tree/part-03) |
-| 04  | [WeakMapと同一性](docs/part-04.md)           | `unwrap`                                         | [`part-04`](https://github.com/winuim/ts-logging-lab/tree/part-04) |
-| 05  | [構造化イベントとAdapter](docs/part-05.md)   | `LogEvent` / `LogAdapter` / `LogTapeAdapter`     | [`part-05`](https://github.com/winuim/ts-logging-lab/tree/part-05) |
-| 06  | [イベントカタログ](docs/part-06.md)          | `eventCatalog` / `parseLevelOverrides`           | [`part-06`](https://github.com/winuim/ts-logging-lab/tree/part-06) |
-| 07  | [拡張可能なマスキング](docs/part-07.md)      | `createArgumentPolicy` / `createPuppeteerPolicy` | [`part-07`](https://github.com/winuim/ts-logging-lab/tree/part-07) |
-| 08  | [型安全なフック](docs/part-08.md)            | `ContextExtractor` / `navigationContext`         | [`part-08`](https://github.com/winuim/ts-logging-lab/tree/part-08) |
-| 09  | [リソース識別とWeakMap](docs/part-09.md)     | `ResourceContext`                                | [`part-09`](https://github.com/winuim/ts-logging-lab/tree/part-09) |
-| 10  | [OpenTelemetryとのログ相関](docs/part-10.md) | `openTelemetryCorrelation`                       | [`part-10`](https://github.com/winuim/ts-logging-lab/tree/part-10) |
-| 11  | [イベント購読と診断ログ](docs/part-11.md)    | `subscribeDiagnostics`                           | [`part-11`](https://github.com/winuim/ts-logging-lab/tree/part-11) |
-| 12  | [品質検証](docs/part-12.md)                  | `npm run benchmark`                              | [`part-12`](https://github.com/winuim/ts-logging-lab/tree/part-12) |
+| Part | Lesson                                                       | Main API or command                              | Completion tag                                                     |
+| ---- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------ |
+| 01   | [Higher-order functions and generics](docs/part-01.md)       | `withLog`                                        | [`part-01`](https://github.com/winuim/ts-logging-lab/tree/part-01) |
+| 02   | [Proxy, Reflect, and this](docs/part-02.md)                  | `withPageLogging`                                | [`part-02`](https://github.com/winuim/ts-logging-lab/tree/part-02) |
+| 03   | [Generalizing the Proxy wrapper](docs/part-03.md)            | `createLoggingProxy`                             | [`part-03`](https://github.com/winuim/ts-logging-lab/tree/part-03) |
+| 04   | [WeakMap and identity](docs/part-04.md)                      | `unwrap`                                         | [`part-04`](https://github.com/winuim/ts-logging-lab/tree/part-04) |
+| 05   | [Structured events and the Adapter pattern](docs/part-05.md) | `LogEvent` / `LogAdapter` / `LogTapeAdapter`     | [`part-05`](https://github.com/winuim/ts-logging-lab/tree/part-05) |
+| 06   | [Event catalogs](docs/part-06.md)                            | `eventCatalog` / `parseLevelOverrides`           | [`part-06`](https://github.com/winuim/ts-logging-lab/tree/part-06) |
+| 07   | [Extensible masking](docs/part-07.md)                        | `createArgumentPolicy` / `createPuppeteerPolicy` | [`part-07`](https://github.com/winuim/ts-logging-lab/tree/part-07) |
+| 08   | [Type-safe hooks](docs/part-08.md)                           | `ContextExtractor` / `navigationContext`         | [`part-08`](https://github.com/winuim/ts-logging-lab/tree/part-08) |
+| 09   | [Resource identity with WeakMap](docs/part-09.md)            | `ResourceContext`                                | [`part-09`](https://github.com/winuim/ts-logging-lab/tree/part-09) |
+| 10   | [Log correlation with OpenTelemetry](docs/part-10.md)        | `openTelemetryCorrelation`                       | [`part-10`](https://github.com/winuim/ts-logging-lab/tree/part-10) |
+| 11   | [Event subscriptions and diagnostic logs](docs/part-11.md)   | `subscribeDiagnostics`                           | [`part-11`](https://github.com/winuim/ts-logging-lab/tree/part-11) |
+| 12   | [Quality verification](docs/part-12.md)                      | `npm run benchmark`                              | [`part-12`](https://github.com/winuim/ts-logging-lab/tree/part-12) |
 
-### 各回の時点で学ぶ
+### Studying a particular version
 
-`main`は完成版です。各回の実装を確認する場合は、作業ツリーに変更がない状態で対応タグへ切り替えます。たとえば第1回は次の手順で確認できます。
+`main` contains the completed implementation. To study an earlier lesson, switch to its tag with a clean working tree. For example, to explore part 1:
 
 ```sh
 git switch --detach part-01
@@ -99,37 +101,35 @@ npm run example:part-01
 npm test
 ```
 
-各タグのREADMEを、その時点のAPI・依存・実行コマンドの正として読んでください。第1回のタグにはLogTapeやPuppeteerは含まれません。実ブラウザが必要な回では、タグのREADMEに従ってChromeを準備します。
+Use the README at each tag as the reference for that version's API, dependencies, and commands. Part 1 includes neither LogTape nor Puppeteer. For lessons requiring a real browser, follow that tag's README to prepare Chrome.
 
-完成版へ戻るには`git switch main`を実行し、再度`npm ci`で依存を揃えます。既存タグは当時の記録として維持するため、古いREADMEやpackage.jsonには導入前のライセンス表記も残っています。
+To return to the completed implementation, run `git switch main`, then `npm ci` again to restore its dependencies. Existing tags are preserved as historical snapshots, so older README and package.json files retain the license metadata that preceded the adoption of MIT.
 
-## 共通の設計方針と責務の境界
+## Shared design principles and responsibilities
 
-| この教材で設計・実装するもの                               | 既存ロガー（主にLogTape）に任せるもの                         |
-| ---------------------------------------------------------- | ------------------------------------------------------------- |
-| HOF/Proxyによる処理へのログ付与                            | ログレベルによる出力フィルタリング                            |
-| LogEventとLogAdapter、出力先に依存しないイベント生成       | Sink/Formatter、NDJSONなどの形式                              |
-| イベントID・カテゴリ・既定レベル・固定メッセージのカタログ | 出力先、ファイル管理、ローテーション                          |
-| イベントごとの**割り当てレベル**の上書き                   | 必要に応じた非同期出力・バッファリング                        |
-| 操作の文脈に応じたマスキングと安全な属性抽出               | 汎用的なロギング機能                                          |
-| OpenTelemetryからの相関情報取得・ログへの付与              | traceId/spanId生成、Span管理・コンテキスト伝播はOpenTelemetry |
-| WeakMapによるアプリ固有のリソース識別                      | ログ基盤の運用機構                                            |
+| Implemented in this tutorial                                              | Delegated to existing infrastructure                                               |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Attaching logging through higher-order functions and Proxy                | Filtering output by log level (LogTape)                                            |
+| Logger-independent LogEvent and LogAdapter contracts and event generation | Sinks, formatters, and formats such as NDJSON (LogTape)                            |
+| Event IDs, categories, default levels, and fixed messages                 | Destinations, file management, and rotation (logger infrastructure)                |
+| Overriding the level assigned to an event                                 | Asynchronous output and buffering when needed (LogTape)                            |
+| Masking and safe attribute extraction based on operation context          | General-purpose logging functionality (LogTape)                                    |
+| Reading OpenTelemetry correlation data and attaching it to logs           | Generating traceId/spanId, managing spans, and propagating context (OpenTelemetry) |
+| Application-specific resource identity with WeakMap                       | Operational logging infrastructure                                                 |
 
-**区別：** イベントに`info`/`error`等のレベルを「付ける」のはアプリ側。そのレベルを「出す／出さない」と判定するのはロガー側です。
+The application **assigns** levels such as `info` and `error` to events. The logger decides whether those levels are **emitted**.
 
-この教材はロギングライブラリもトレーシングSDKも再実装しません。LogEvent/LogAdapterの契約は**特定のロガーに依存させず**、教材の具体的な出力アダプタは**LogTapeAdapterの1種類のみ**を実装します。Pinoなど別ロガーは交換可能な設計の説明にとどめ、教材内で複数アダプタを実装しません。LogTapeのAPIや設定をアプリ側のイベント契約に漏らさないことを重視します。
+The tutorial does not reimplement a logging library or tracing SDK. LogEvent and LogAdapter remain **independent of any logger**, and **LogTapeAdapter is the only concrete logging adapter** implemented here. Other loggers, such as Pino, are discussed only as possible replacements. LogTape APIs and configuration stay outside the application's event contracts.
 
-ログ付与によって本体の戻り値や拒否理由を変えず、必要な範囲で出力障害を隔離します。ログの欠落や出力完了の扱い、Promise・Proxyの同一性など、保証する範囲と制約は各回の説明で確認してください。
+Logging preserves the original return values and rejection reasons, isolating output failures where needed. Each lesson documents its guarantees and limits, including lost logs, output completion, and Promise and Proxy identity.
 
-機密情報は既定で安全側に扱い、生の引数・戻り値・例外を無条件には出力しません。操作名・追加ルール・フックも含めて、安全に残せる属性をアプリ側で選びます。カスタム処理の信頼境界は[第7回](docs/part-07.md)と[第8回](docs/part-08.md)を参照してください。
+Sensitive information is handled conservatively by default. Raw arguments, return values, and exceptions are not logged indiscriminately. The application chooses safe attributes, including those supplied through operation names, custom rules, and hooks. See [part 7](docs/part-07.md) and [part 8](docs/part-08.md) for the trust boundaries of custom code.
 
-traceId/spanIdの生成、Spanの親子管理、非同期コンテキスト伝播はOpenTelemetryの標準API/SDKに任せます。教材の連携は、有効なアクティブSpanContextの参照とログ属性への付与に限定します。WeakMapによるリソース識別は、非同期処理の文脈とは別の責務です。
+OpenTelemetry's standard API and SDK handle traceId/spanId generation, span parentage, and asynchronous context propagation. The tutorial's integration only reads a valid active SpanContext and adds its identifiers to log attributes. Resource identity managed through WeakMap has a separate responsibility from asynchronous execution context.
 
-Zenn記事は[別リポジトリ](https://github.com/winuim/zenn-contents)の未公開草稿として管理しています（アクセス権が必要な場合があります）。記事公開前に対応する`part-XX`タグとAPI・実行結果を照合し、未実装の発展案と区別します。記事の主題はTypeScriptの設計上の課題と解決策です。
+## Verification
 
-## 検証方法
-
-ブラウザ不要の通常の検証は、次の順に実行します。
+Run the standard checks without a browser in this order:
 
 ```sh
 npm run typecheck
@@ -140,24 +140,24 @@ npm run lint
 npm run format:check
 ```
 
-GitHub Actionsは課金しない方針のため使用せず、検証はローカルで実行してPRに結果を記録します。
+GitHub Actions is not used to avoid billed workflow runs. Run checks locally and record the results in the pull request.
 
-### 共通コマンド
+### Common commands
 
-| コマンド                         | 用途                                                            |
-| -------------------------------- | --------------------------------------------------------------- |
-| `npm run typecheck`              | ソース・テスト・Vitest設定の型チェック                          |
-| `npm test` / `npm run test:unit` | ブラウザ不要の単体テストを一度実行                              |
-| `npm run test:watch`             | 単体テストの変更監視                                            |
-| `npm run build`                  | `src/`を`dist/`へESM・型宣言・ソースマップとして出力            |
-| `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし） |
-| `npm run lint`                   | 型情報を使ったESLint検査（警告も失敗扱い）                      |
-| `npm run format:check`           | Prettierの整形検査                                              |
-| `npm run format`                 | Prettierで整形                                                  |
+| Command                          | Purpose                                                              |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `npm run typecheck`              | Type check source, tests, and Vitest configuration                   |
+| `npm test` / `npm run test:unit` | Run unit tests once without a browser                                |
+| `npm run test:watch`             | Watch unit tests for changes                                         |
+| `npm run build`                  | Compile `src/` to ESM, declarations, and source maps in `dist/`      |
+| `node dist/index.js`             | Check that the built entry point loads (API exports only; no output) |
+| `npm run lint`                   | Run ESLint with type information; warnings also fail                 |
+| `npm run format:check`           | Check formatting with Prettier                                       |
+| `npm run format`                 | Format files with Prettier                                           |
 
-### 統合テストと性能計測
+### Integration tests and benchmarks
 
-単体テストは`tests/unit/`、実Chromeを使う統合テストは`tests/integration/`に分けています。ブラウザを使う実装を変更した場合は、次も実行します。
+Unit tests live in `tests/unit/`; integration tests using real Chrome live in `tests/integration/`. When changing implementation that uses a browser, also run:
 
 ```sh
 npm run browser:install
@@ -165,16 +165,16 @@ npm run test:integration
 npm run example:part-02
 ```
 
-横断テストと性能計測の条件・実測値・制約は[第12回](docs/part-12.md)、計測の生データは[reference.json](benchmarks/results/reference.json)を参照してください。性能計測は次のコマンドで実行できます。
+See [part 12](docs/part-12.md) for regression tests, benchmark conditions, measurements, and limitations, and [reference.json](benchmarks/results/reference.json) for the raw measurements. Run the benchmark with:
 
 ```sh
 npm run benchmark -- /private/tmp/ts-logging-benchmark.json
 ```
 
-## ライセンス
+## License
 
-本リポジトリのコードと同梱ドキュメントは[MITライセンス](LICENSE)で提供します。著作権表示とライセンス表示を保持することを条件に、商用利用・改変・再配布が可能です。無保証で提供します。
+The code and bundled documentation are provided under the [MIT License](LICENSE). Commercial use, modification, and redistribution are permitted provided the copyright and license notices are retained. The software is provided without warranty.
 
-Puppeteer、LogTape、OpenTelemetryなどの第三者依存には、それぞれのライセンスが適用されます。別リポジトリで管理するZenn記事の本文は、このリポジトリのライセンス対象には含めません。
+Third-party dependencies, including Puppeteer, LogTape, and OpenTelemetry, remain subject to their respective licenses.
 
-`package.json`の`private: true`はnpmへの誤公開を防ぐ設定です。GitHubリポジトリの公開範囲やMITライセンスとは独立しているため、そのまま維持します。
+`private: true` in `package.json` prevents accidental publication to npm. It is independent of GitHub repository visibility and the MIT License, so it remains enabled.

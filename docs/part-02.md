@@ -1,6 +1,6 @@
 # 第2回：Proxy・Reflect・thisとprivate
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-02](https://github.com/winuim/ts-logging-lab/tree/part-02)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-02](https://github.com/winuim/ts-logging-lab/tree/part-02)
 
 このページは`part-02`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

@@ -1,6 +1,6 @@
 # 第4回：WeakMapとunwrap
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-04](https://github.com/winuim/ts-logging-lab/tree/part-04)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-04](https://github.com/winuim/ts-logging-lab/tree/part-04)
 
 このページは`part-04`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

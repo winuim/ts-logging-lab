@@ -1,6 +1,6 @@
 # 第5回：LogEvent・LogAdapterとLogTape
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-05](https://github.com/winuim/ts-logging-lab/tree/part-05)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-05](https://github.com/winuim/ts-logging-lab/tree/part-05)
 
 このページは`part-05`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

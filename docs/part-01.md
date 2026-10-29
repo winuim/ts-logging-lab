@@ -1,6 +1,6 @@
 # 第1回：高階関数とジェネリクス
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-01](https://github.com/winuim/ts-logging-lab/tree/part-01)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-01](https://github.com/winuim/ts-logging-lab/tree/part-01)
 
 このページは`part-01`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 

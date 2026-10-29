@@ -1,6 +1,6 @@
 # 第7回：操作別のArgumentPolicy
 
-[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-07](https://github.com/winuim/ts-logging-lab/tree/part-07)
+[教材の一覧](../README.ja.md#全12回の一覧) · [完成タグ part-07](https://github.com/winuim/ts-logging-lab/tree/part-07)
 
 このページは`part-07`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
 
