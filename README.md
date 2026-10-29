@@ -4,7 +4,38 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第12回まで実装** — 高階関数からProxy、構造化イベント、マスキング、フック、リソース識別、OpenTelemetry相関、診断購読、横断テストと性能計測まで用意しています。各回のタグはレビュー・マージ完了後に作成します。記事は未公開草稿として別管理し、教材の公開範囲・ライセンスは別途判断します。
+> **ステータス：全12回を実装済み** — `main`は完成版です。各回の完成時点は`part-01`〜`part-12`タグで参照できます。Zenn記事は別リポジトリで管理する未公開草稿です。コードと同梱ドキュメントには[MITライセンス](LICENSE)を適用します。
+
+## 対象読者と始め方
+
+TypeScriptの関数・ジェネリクス、Promise/async/awaitの基本を理解し、既存コードにログを追加する設計を学びたい方を対象にしています。Puppeteerの詳しい知識は不要で、最初の実行例はブラウザなしで試せます。教材として設計の変化と制約を示すためのコードです。実サービスへ取り入れる場合は、各回の制約と自分のアプリの機密情報・障害時の要件を確認してください。
+
+[セットアップ](#セットアップ)のNode.jsとnpmを準備してから、次を実行します。
+
+```sh
+git clone https://github.com/winuim/ts-logging-lab.git
+cd ts-logging-lab
+npm ci
+npm run example:part-01
+npm test
+```
+
+`main`の実行例は完成版のAPIを使用します。現在の`withLog`はLogTapeの設定が必要ですが、実行例には設定を含めています。APIの一覧は[機能を探す](#機能を探す)、実装と制約は各回の説明を参照してください。
+
+### 各回の時点で学ぶ
+
+たとえば第1回だけの実装を確認する場合は、作業ツリーに変更がない状態で次を実行します。
+
+```sh
+git switch --detach part-01
+npm ci
+npm run example:part-01
+npm test
+```
+
+各タグのREADMEを、その時点のAPI・依存・実行コマンドの正として読んでください。第1回のタグにはLogTapeやPuppeteerは含まれません。第2回以降で実ブラウザを使う場合は、タグのREADMEに従ってChromeを準備します。
+
+完成版へ戻るには`git switch main`を実行し、再度`npm ci`で依存を揃えます。[第3回以降の説明](docs/part-03.md)では追加機能と前回からの動作差を説明しています。既存タグは当時の記録として維持するため、古いREADMEやpackage.jsonには導入前のライセンス表記も残っています。
 
 ## このプロジェクトで学ぶこと
 
@@ -32,26 +63,28 @@
 
 ## 全12回のロードマップ
 
-各回のタイトルは仮題です。Issueで詳細化し、実装と記事を照合して確定します。
+各回の実装は完了し、以下のタグで参照できます。第1・2回はこのREADME、第3〜12回は`docs/part-XX.md`で実装と制約を説明します。記事のタイトル・本文は公開前に対応タグと照合します。
 
-| 回  | 主題                      | 追加する仕組み                                                               | 完了時の予定タグ |
-| --- | ------------------------- | ---------------------------------------------------------------------------- | ---------------- |
-| 01  | 高階関数とジェネリクス    | `withLog` による最小のログ付与                                               | `part-01`        |
-| 02  | Proxy・Reflect・this      | インスタンスを安全にラップする                                               | `part-02`        |
-| 03  | Proxyの共通化             | 複数のオブジェクト／戻り値への拡張                                           | `part-03`        |
-| 04  | WeakMapと同一性           | `unwrap`、Proxy管理、イベントとの共存                                        | `part-04`        |
-| 05  | 構造化イベントとAdapter   | ロガー非依存の`LogEvent`・`LogAdapter`と単一の`LogTapeAdapter`               | `part-05`        |
-| 06  | イベントカタログ          | ID・カテゴリ・既定レベル・固定メッセージ、レベル上書き                       | `part-06`        |
-| 07  | 拡張可能なマスキング      | 操作別ルール、既定の安全方針、テスト                                         | `part-07`        |
-| 08  | 型安全なフック            | ContextExtractorで操作前後・失敗時の安全な属性を抽出                         | `part-08`        |
-| 09  | リソース識別とWeakMap     | Browser/Page等の識別情報の関連付け                                           | `part-09`        |
-| 10  | OpenTelemetryとのログ相関 | アクティブSpanのtraceId/spanIdを取得してLogEventに付与（独自生成・伝播なし） | `part-10`        |
-| 11  | イベント購読と診断ログ    | HTTP/console/ページ例外等の診断イベントと購読解除                            | `part-11`        |
-| 12  | 品質検証                  | 正常・異常・秘匿・並列・性能のテストと計測                                   | `part-12`        |
+| 回  | 主題                      | 追加する仕組み                                                               | 完成タグ                                                           |
+| --- | ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 01  | 高階関数とジェネリクス    | `withLog` による最小のログ付与                                               | [`part-01`](https://github.com/winuim/ts-logging-lab/tree/part-01) |
+| 02  | Proxy・Reflect・this      | インスタンスを安全にラップする                                               | [`part-02`](https://github.com/winuim/ts-logging-lab/tree/part-02) |
+| 03  | Proxyの共通化             | 複数のオブジェクト／戻り値への拡張                                           | [`part-03`](https://github.com/winuim/ts-logging-lab/tree/part-03) |
+| 04  | WeakMapと同一性           | `unwrap`、Proxy管理、イベントとの共存                                        | [`part-04`](https://github.com/winuim/ts-logging-lab/tree/part-04) |
+| 05  | 構造化イベントとAdapter   | ロガー非依存の`LogEvent`・`LogAdapter`と単一の`LogTapeAdapter`               | [`part-05`](https://github.com/winuim/ts-logging-lab/tree/part-05) |
+| 06  | イベントカタログ          | ID・カテゴリ・既定レベル・固定メッセージ、レベル上書き                       | [`part-06`](https://github.com/winuim/ts-logging-lab/tree/part-06) |
+| 07  | 拡張可能なマスキング      | 操作別ルール、既定の安全方針、テスト                                         | [`part-07`](https://github.com/winuim/ts-logging-lab/tree/part-07) |
+| 08  | 型安全なフック            | ContextExtractorで操作前後・失敗時の安全な属性を抽出                         | [`part-08`](https://github.com/winuim/ts-logging-lab/tree/part-08) |
+| 09  | リソース識別とWeakMap     | Browser/Page等の識別情報の関連付け                                           | [`part-09`](https://github.com/winuim/ts-logging-lab/tree/part-09) |
+| 10  | OpenTelemetryとのログ相関 | アクティブSpanのtraceId/spanIdを取得してLogEventに付与（独自生成・伝播なし） | [`part-10`](https://github.com/winuim/ts-logging-lab/tree/part-10) |
+| 11  | イベント購読と診断ログ    | HTTP/console/ページ例外等の診断イベントと購読解除                            | [`part-11`](https://github.com/winuim/ts-logging-lab/tree/part-11) |
+| 12  | 品質検証                  | 正常・異常・秘匿・並列・性能のテストと計測                                   | [`part-12`](https://github.com/winuim/ts-logging-lab/tree/part-12) |
 
 各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
 
 ## 第1回：高階関数とジェネリクス
+
+この節は`part-01`時点の説明です。完成版では第5回から出力にLogTapeを使います。現在の実行例は[examples/part-01.mjs](examples/part-01.mjs)を参照してください。
 
 `src/index.ts`から`withLog(operation, fn)`を公開します。操作名は秘密情報を含まない固定文字列にしてください。
 
@@ -81,6 +114,8 @@ npm run example:part-01
 - 第1回のタグにはAdapter・イベントカタログ・ロギング基盤・Puppeteer連携は含まれていません。同じ操作名の並行ログを識別するIDもまだありません。各呼び出しの計測値は独立しています。
 
 ## 第2回：Proxy・Reflect・thisとprivate
+
+この節は`part-02`時点の説明です。完成版では第3回以降のProxy共通化、同一性管理、構造化ログ等も適用されます。
 
 `withPageLogging(page)`で実PageをProxy化します。ログ対象は`goto`だけです。`goto`は第1回の`withLog`で包み、開始・成功・失敗・処理時間を出力します。URL・引数・応答・生のエラーはログに含めません。
 
@@ -175,6 +210,13 @@ npm ci
 | `npm run example:part-01`        | 第1回の成功・失敗の実行例                                       |
 | `npm run browser:install`        | Puppeteerが指定するChromeを取得                                 |
 | `npm run example:part-02`        | 実Pageをラップする第2回の実行例                                 |
+| `npm run example:part-03`        | Browser・Page・Keyboard・Locatorの共通Proxy                     |
+| `npm run example:part-07`        | 操作別の引数選別とマスキング                                    |
+| `npm run example:part-08`        | 型付きフックと安全な属性抽出                                    |
+| `npm run example:part-09`        | 複数Pageのリソース識別                                          |
+| `npm run example:part-10`        | 並列Spanとログの相関（ブラウザ不要）                            |
+| `npm run example:part-11`        | ローカルHTTPサーバーで診断イベントを確認                        |
+| `npm run benchmark`              | 固定条件による性能計測（ブラウザ不要）                          |
 | `npm run lint`                   | 型情報を使ったESLint検査（警告も失敗扱い）                      |
 | `npm run format:check`           | Prettierの整形検査                                              |
 | `npm run format`                 | Prettierで整形                                                  |
@@ -185,8 +227,11 @@ npm ci
 ### 構成と設計判断
 
 ```text
-src/                          教材実装（withLog・withPageLoggingを公開）
+src/                          教材実装（公開APIはsrc/index.ts）
 examples/                     ビルド済みコードを使う小さな実行例
+docs/                         第3〜12回の実装・制約・動作差
+benchmarks/                   性能計測スクリプトと参照実測結果
+LICENSE                       コードと同梱ドキュメントのMITライセンス
 tests/unit/                   ブラウザ不要の単体テスト
 tests/integration/            実Pageによるprivate・操作・成功・失敗の統合テスト
 vitest.config.ts              単体テストのみを収集
@@ -199,21 +244,12 @@ vitest.integration.config.ts  統合テストのみを収集
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
 - Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
-- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTapeは第5回で導入しました。OpenTelemetryは導入回で決定します。
+- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTapeは第5回で導入しました。OpenTelemetryは第10回でAPI **1.10.0**、SDK/context-async-hooks **3.0.0**を導入しました。
 - 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
 
-READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zennの[第1回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-01.md)は`part-01`に対応します。[第2回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-02.md)も今回の実装と照合して別PRで追加します。記事は`published: false`を維持し、対応タグは実装のレビュー・マージ完了後に作成します。
-
-## 関連
-
-- 既存の実験的実装：[puppeteer-hof-logging](https://github.com/winuim/puppeteer-hof-logging)（教材の完成版と同一ではありません）
-- 記事草稿：[zenn-contents](https://github.com/winuim/zenn-contents)（現在の下書きは新構成に合わせて再編集予定）
-
-## ライセンス
-
-`UNLICENSED`（利用許諾なし）とし、`private: true`でnpmへの誤公開を防ぎます。現在のPrivate運用を維持し、オープンソースライセンスや公開範囲は公開を判断する際に別途決定します。
+READMEはセットアップ・設計判断・ロードマップを、[AGENTS.md](AGENTS.md)は開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zenn記事は別リポジトリの未公開草稿として管理しています。草稿の内容は公開前に対応する`part-XX`タグと照合します。
 
 ## 第3回の追加
 
@@ -271,3 +307,16 @@ WeakMapでProxyと実体を対応付け、二重ラップとメソッド参照�
 | `openTelemetryCorrelation`                       | 10     | 有効なSpanContextの参照      |
 | `subscribeDiagnostics`                           | 11     | 診断イベントの購読と解除     |
 | `npm run benchmark`                              | 12     | 固定条件による実測比較       |
+
+## 関連
+
+- 既存の実験的実装：[puppeteer-hof-logging](https://github.com/winuim/puppeteer-hof-logging)（教材の完成版と同一ではありません）
+- 記事草稿の管理先：[zenn-contents](https://github.com/winuim/zenn-contents)（別リポジトリ。アクセス権が必要な場合があります）
+
+## ライセンス
+
+本リポジトリのコードと同梱ドキュメントは[MITライセンス](LICENSE)で提供します。著作権表示とライセンス表示を保持することを条件に、商用利用・改変・再配布が可能です。無保証で提供します。
+
+Puppeteer、LogTape、OpenTelemetryなどの第三者依存には、それぞれのライセンスが適用されます。別リポジトリで管理するZenn記事の本文は、このリポジトリのライセンス対象には含めません。
+
+`package.json`の`private: true`はnpmへの誤公開を防ぐ設定です。GitHubリポジトリの公開範囲やMITライセンスとは独立しているため、そのまま維持します。

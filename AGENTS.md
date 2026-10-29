@@ -86,7 +86,7 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - 記事URL、コード参照、`part-XX`タグ、公開済みAPIが一致することをチェックする。
 - 仕様変更時はREADME、関連するIssue、記事草稿の更新要否を確認する。
 - Zenn記事を本人の明示的な依頼なく公開しない（`published: false`を維持）。
-- 新しい教材リポジトリは現時点でPrivate。公開が必要な段階では別途判断する。
+- コードと同梱ドキュメントはMITライセンスとする。GitHubの公開設定変更は所有者の明示的な依頼に従う。npmへの誤公開防止のため`private: true`を維持する。
 
 ## PR完了チェックリスト
 
@@ -107,6 +107,6 @@ READMEの全12回ロードマップが正です。各回の完成コミットへ
 - 実ブラウザの変更時は`npm run browser:install`でChromeを準備し、`npm run test:integration`と`npm run example:part-02`も実行する。通常の`npm ci`でブラウザを取得しない設定を維持する。
 - 実装状況と各回の動作差はREADMEとdocs/part-XX.mdを参照する。後続回の機能を完了済みとみなさない。
 
-## 未決定事項
+## 採用バージョンとライセンス
 
-Puppeteerの採用バージョンはREADMEのセットアップを参照する。LogTapeの採用バージョンもREADMEとpackage.jsonを参照する。OpenTelemetry API/SDKの採用バージョンもREADMEとpackage.jsonを参照する。ライセンスは現在`UNLICENSED`（利用許諾なし）とし、公開時のライセンスと公開範囲は別途判断する。
+Puppeteerの採用バージョンはREADMEのセットアップを参照する。LogTapeの採用バージョンもREADMEとpackage.jsonを参照する。OpenTelemetry API/SDKの採用バージョンもREADMEとpackage.jsonを参照する。コードと同梱ドキュメントにはルートの`LICENSE`（MIT）を適用し、package.jsonとlockfileのライセンス表記を同期する。第三者依存はそれぞれのライセンスに従い、別リポジトリのZenn記事はこのライセンスの対象に含めない。
