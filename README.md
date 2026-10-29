@@ -127,8 +127,6 @@ traceId/spanIdの生成、Spanの親子管理、非同期コンテキスト伝�
 
 Zenn記事は[別リポジトリ](https://github.com/winuim/zenn-contents)の未公開草稿として管理しています（アクセス権が必要な場合があります）。記事公開前に対応する`part-XX`タグとAPI・実行結果を照合し、未実装の発展案と区別します。記事の主題はTypeScriptの設計上の課題と解決策です。
 
-関連する実験的実装：[puppeteer-hof-logging](https://github.com/winuim/puppeteer-hof-logging)（教材の完成版と同一ではありません）。
-
 ## 検証方法
 
 ブラウザ不要の通常の検証は、次の順に実行します。
