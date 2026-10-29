@@ -1,5 +1,9 @@
 # 第12回：横断テストと性能計測
 
+[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-12](https://github.com/winuim/ts-logging-lab/tree/part-12)
+
+このページは`part-12`時点の実装・検証・計測結果を説明します。
+
 ## 回帰テストの境界
 
 単体64件・実Chrome統合12件をローカルで検証する。各回で追加した正常・異常・型・同一性・秘匿のテストに加え、最終回ではProxy→Policy→Extractor→ResourceContext→OTel相関→LogTapeの経路をまとめて確認する。
@@ -21,7 +25,7 @@ npm run test:integration
 npm run benchmark -- /private/tmp/ts-logging-benchmark.json
 ```
 
-GitHub Actionsは使用しない。各回のAPIはその回のタグで確認する。part-12タグはレビュー・mainマージ後に作成する。
+GitHub Actionsは使用しない。各回のAPIはその回のタグで確認する。完成時点は`part-12`タグで参照できる。
 
 ## 計測条件
 
@@ -52,4 +56,4 @@ logger-enabledはLogTape標準getStreamSinkとJSON Lines Formatterを使い、�
 
 ## 残る制約
 
-既存の制約（最初のProxy設定を採用、宣言した非同期メソッドだけをログ化、現在のRealmのPromiseを対象、出力完了を本体の成功条件にしない）を維持する。例は教材用であり、プロダクションの監査ログ完全性や分散計装を保証しない。教材と記事の公開範囲・ライセンスは別途判断する。
+既存の制約（最初のProxy設定を採用、宣言した非同期メソッドだけをログ化、現在のRealmのPromiseを対象、出力完了を本体の成功条件にしない）を維持する。例は教材用であり、プロダクションの監査ログ完全性や分散計装を保証しない。コードと同梱ドキュメントのライセンスは[LICENSE](../LICENSE)を参照する。Zenn記事は別リポジトリの未公開草稿として管理する。

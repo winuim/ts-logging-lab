@@ -1,5 +1,9 @@
 # 第10回：OpenTelemetryのSpanContextをログへ関連付ける
 
+[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-10](https://github.com/winuim/ts-logging-lab/tree/part-10)
+
+このページは`part-10`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
+
 `openTelemetryCorrelation`は`trace.getActiveSpan()?.spanContext()`を参照し、有効な場合だけtraceId/spanIdを返す。`LogOptions.correlation`へこの関数を明示的に渡す。既定では取得しない。LogEvent/LogAdapterにはOTel型を入れず、境界は文字列2つのCorrelationと同期的なCorrelationProviderだけとする。
 
 操作開始時に一度取得し、開始・成功・失敗へ同じIDを転記する。有効なアクティブSpanがない場合は属性を省略する。相関取得の例外や不正IDも属性を省略して本体の戻り値・拒否理由を保つ。Policy/Extractorの属性からtraceId/spanIdを注入させない。相関Provider自体は信頼するアプリの拡張点であり、ID形式の検査は正しいSpanへの所属を証明しない。
@@ -11,3 +15,11 @@ ResourceContextのIDは実オブジェクトの寿命、trace/spanは非同期�
 単体テストはSpan不在・無効・有効、並列処理、失敗時、LogTapeへの到達、取得失敗、属性の偽装拒否を検証する。計測・出力の成功を本体の成功条件にはしない。例は`npm run example:part-10`で実行できる。
 
 参照: https://opentelemetry.io/docs/languages/js/instrumentation/
+
+## 実行例
+
+リポジトリのルートで実行します。ブラウザなしで実行できます。
+
+```sh
+npm run example:part-10
+```

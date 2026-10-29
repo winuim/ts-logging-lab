@@ -1,5 +1,9 @@
 # 第9回：ResourceContextと実体の識別
 
+[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-09](https://github.com/winuim/ts-logging-lab/tree/part-09)
+
+このページは`part-09`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
+
 ResourceContextはunwrap後の実体をキーにWeakMapでid/kindを関連付ける。同じPage・Proxy・再登録は同じ記述を返し、別オブジェクトは管理インスタンス内で別IDとなる。分類は最初の登録が有効で、IDはbrowser-1/page-2等のローカル識別子。管理インスタンスを作り直せば番号は再利用され得る。永続ID、認証ID、traceId/spanIdではない。
 
 LogOptionsへresources/resource/resourceKindを追加する。Proxyは実体を操作対象としてwithLogへ渡し、ID属性を開始時に一度取得して開始・成功・失敗へ同じ値を付ける。フック/PolicyからresourceId/resourceKindを上書きできず、識別処理の例外でも本体を変えない。IDは操作対象に付くもので、戻り値の親子関係を自動記録するものではない。
@@ -9,3 +13,11 @@ BrowserContextもラッパーへ接続し、Browser.createBrowserContext→Conte
 WeakMap以外のリソース一覧や強参照の配列を作らない。closeはオブジェクトの消滅ではなく、アプリが実体・Proxy・取得したメソッド等を保持すれば参照は生きる。レジストリとProxy設定が保持される寿命も考慮する。GC時刻や回収量は保証せず、参照が到達不能になったときの管理情報の回収をGCへ任せる。
 
 単体57件・実Chrome統合8件で同じPage、異なるPage、Proxy/実体、再登録、最初の分類、識別処理の障害、実Browser/Context/Pageを検証。example:part-09は2つのPageを使い、同じPageの反復と別PageのIDが区別されることをNDJSONで確認する。OTelのID生成・伝播は今回追加しない。
+
+## 実行例
+
+リポジトリのルートで実行します。実ブラウザを使います。事前に`npm run browser:install`を実行してください。
+
+```sh
+npm run example:part-09
+```
