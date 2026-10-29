@@ -177,7 +177,7 @@ Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用�
 
 ## 開発と記事の対応
 
-1. README/AGENTS.mdに方針を定義する。
+1. READMEに方針を定義する。
 2. 全12回をIssueに起こし、依存順に実装する。
 3. IssueごとにブランチとPRを作成し、テスト・レビュー後に`main`へマージする。
 4. 各回の完了コミットに`part-01`〜`part-12`タグを付ける（実装完了前に作らない）。
@@ -249,7 +249,7 @@ vitest.integration.config.ts  統合テストのみを収集
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
 
-READMEはセットアップ・設計判断・ロードマップを、[AGENTS.md](AGENTS.md)は開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zenn記事は別リポジトリの未公開草稿として管理しています。草稿の内容は公開前に対応する`part-XX`タグと照合します。
+READMEはセットアップ・設計判断・ロードマップを説明します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zenn記事は別リポジトリの未公開草稿として管理しています。草稿の内容は公開前に対応する`part-XX`タグと照合します。
 
 ## 第3回の追加
 
