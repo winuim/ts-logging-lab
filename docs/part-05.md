@@ -1,5 +1,9 @@
 # 第5回：LogEvent・LogAdapterとLogTape
 
+[教材の一覧](../README.md#全12回の一覧) · [完成タグ part-05](https://github.com/winuim/ts-logging-lab/tree/part-05)
+
+このページは`part-05`時点の実装と制約を説明します。完成版との差は後続回で確認してください。
+
 LogEventはoperation・phase・割り当てlevel・message・primitiveだけのattributesを持ち、LogTapeの型を参照しない。LogAdapterはemit(event): void | Promise<void>という契約だけを持つ。具体的な製品用AdapterはLogTapeAdapterのみ。記録用ダブルとSinkはテスト内だけで使う。
 
 withLogの第3引数でadapterを指定できる。省略時はLogTapeAdapterを使い、ライブラリはconfigureしない。呼び出し側でLogTapeのconfigure/getConsoleSinkなどを設定する。未設定なら出力されない。レベルフィルタ、カテゴリの出力制御、整形、Sink、バッファリング等はLogTapeへ任せる。Pino等の別Adapterや独自出力基盤は作らない。
