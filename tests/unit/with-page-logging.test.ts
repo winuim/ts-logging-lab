@@ -106,8 +106,8 @@ describe('withPageLogging', () => {
     expect(console.info).toHaveBeenLastCalledWith(
       expect.stringContaining('"phase":"success"'),
     );
-    expect(console.info).toHaveBeenCalledTimes(1);
-  expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.info).toHaveBeenCalledTimes(2);
+    expect(console.error).not.toHaveBeenCalled();
     expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
       'dummy-token',
     );
