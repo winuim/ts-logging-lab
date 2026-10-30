@@ -49,6 +49,7 @@ class PageFixture {
 describe('withPageLogging', () => {
   beforeEach(() => {
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -105,7 +106,8 @@ describe('withPageLogging', () => {
     expect(console.info).toHaveBeenLastCalledWith(
       expect.stringContaining('"phase":"success"'),
     );
-    expect(console.info).toHaveBeenCalledTimes(2);
+    expect(console.info).toHaveBeenCalledTimes(1);
+  expect(console.error).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
       'dummy-token',
     );
@@ -118,10 +120,10 @@ describe('withPageLogging', () => {
       const page = withPageLogging(raw);
       await expect(page.goto(url)).rejects.toBe(raw.error);
       expect(raw.calls).toBe(1);
-      expect(console.info).toHaveBeenLastCalledWith(
+      expect(console.error).toHaveBeenLastCalledWith(
         expect.stringContaining('"phase":"failure"'),
       );
-      expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
+      expect(JSON.stringify([vi.mocked(console.info).mock.calls, vi.mocked(console.error).mock.calls])).not.toContain(
         'dummy-secret',
       );
     },
