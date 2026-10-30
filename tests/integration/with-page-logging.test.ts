@@ -86,7 +86,7 @@ test('実Pageのgotoが返す拒否理由を置き換えない', async () => {
   const page = withPageLogging(original);
   await expect(page.goto('about:blank')).rejects.toBe(error);
   expect(console.info).toHaveBeenLastCalledWith(
-    expect.stringMatching(/^page.goto: failure \(\d+\.\d{2} ms\)$/),
+    expect.stringContaining('"phase":"failure"'),
   );
   expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
     'dummy-secret',
@@ -97,7 +97,7 @@ test('実際の不正URLも失敗ログを出してrejectする', async () => {
   const page = withPageLogging(currentPage());
   await expect(page.goto('not-a-valid-url')).rejects.toBeInstanceOf(Error);
   expect(console.info).toHaveBeenLastCalledWith(
-    expect.stringMatching(/^page.goto: failure \(\d+\.\d{2} ms\)$/),
+    expect.stringContaining('"phase":"failure"'),
   );
   expect(console.info).toHaveBeenCalledTimes(2);
 });
