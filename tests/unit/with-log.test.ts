@@ -3,11 +3,17 @@ import { ConsoleAdapter, createEmitter, withLog } from '../../src/index.js';
 import type { LogAdapter, LogEvent } from '../../src/index.js';
 
 describe('withLog', () => {
-  beforeEach(() => vi.spyOn(console, 'info').mockImplementation(() => undefined));
+  beforeEach(() => {
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
   afterEach(() => vi.restoreAllMocks());
 
   function records(): LogEvent[] {
-    return vi.mocked(console.info).mock.calls.map(([value]) => JSON.parse(value as string) as LogEvent);
+    return [...vi.mocked(console.info).mock.calls, ...vi.mocked(console.error).mock.calls]
+      .map(([value]) => JSON.parse(value as string) as LogEvent);
   }
 
   test('開始と成功を通知し、引数と戻り値を変更しない', async () => {
@@ -77,9 +83,17 @@ describe('withLog', () => {
     ]);
   });
 
-  test('ConsoleAdapterは1行1JSONを出す', () => {
-    new ConsoleAdapter().emit({ operation: 'x', phase: 'start', level: 'info', message: 'Operation started' });
-    expect(records()).toHaveLength(1);
+  test.each([
+    ['debug', 'debug'],
+    ['info', 'info'],
+    ['warning', 'warn'],
+    ['error', 'error'],
+  ] as const)('ConsoleAdapterは%sをconsole.%sにNDJSON出力する', (level, method) => {
+    const event: LogEvent = { operation: 'x', phase: 'start', level, message: 'Operation started' };
+    new ConsoleAdapter().emit(event);
+    expect(console[method]).toHaveBeenCalledExactlyOnceWith(JSON.stringify(event));
+    const total = ['debug', 'info', 'warn', 'error'] as const;
+    expect(total.reduce((count, name) => count + vi.mocked(console[name]).mock.calls.length, 0)).toBe(1);
   });
 
   test('並列実行の時間計測を混同しない', async () => {
