@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、イベントカタログ、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第4回まで実装** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第5回以降の機能は未実装です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
+> **ステータス：第4回まで確定、第5回改訂PR作業中** — `withLog`と、実Pageの`goto`をログ化する`withPageLogging`、単体・実ブラウザのテストと実行例を用意しています。第5回は`feature/part-05-emitter`ブランチで作業中です（未マージ）。第6回以降の改訂内容は未確定です。各回のタグはレビュー・マージ完了後に作成します。ロードマップ全体の実装完了を意味しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -16,21 +16,21 @@
 
 ## 責務の境界
 
-| この教材で設計・実装するもの                               | 既存ロガー（主にLogTape）に任せるもの                         |
+| この教材で設計・実装するもの                               | 第5回では実装しない／将来検討するもの                         |
 | ---------------------------------------------------------- | ------------------------------------------------------------- |
 | HOF/Proxyによる処理へのログ付与                            | ログレベルによる出力フィルタリング                            |
-| LogEventとLogAdapter、出力先に依存しないイベント生成       | Sink/Formatter、NDJSONなどの形式                              |
+| OperationEvent・LogEvent・LogAdapter、イベント生成        | 高度なSink/Formatterや出力基盤                                |
 | イベントID・カテゴリ・既定レベル・固定メッセージのカタログ | 出力先、ファイル管理、ローテーション                          |
-| イベントごとの**割り当てレベル**の上書き                   | 必要に応じた非同期出力・バッファリング                        |
+| レベル別console出力（第5回）・割り当てレベル上書き（構想） | 非同期出力の完了保証・バッファリング                           |
 | 操作の文脈に応じたマスキングと安全な属性抽出               | 汎用的なロギング機能                                          |
 | OpenTelemetryからの相関情報取得・ログへの付与              | traceId/spanId生成、Span管理・コンテキスト伝播はOpenTelemetry |
 | WeakMapによるアプリ固有のリソース識別                      | ログ基盤の運用機構                                            |
 
-**区別：** イベントに`info`/`error`等のレベルを「付ける」のはアプリ側。そのレベルを「出す／出さない」と判定するのはロガー側です。
+**区別：** イベントに`info`/`error`等のレベルを「付ける」のはイベント生成側。第5回の`ConsoleAdapter`はレベルに応じてconsoleメソッドを振り分けますが、出力フィルタリングはしません。
 
-この教材はロギングライブラリもトレーシングSDKも再実装しません。LogEvent/LogAdapterの契約は**特定のロガーに依存させず**、教材の具体的な出力アダプタは**LogTapeAdapterの1種類のみ**を実装します。Pinoなど別ロガーは交換可能な設計の説明にとどめ、教材内で複数アダプタを実装しません。LogTapeのAPIや設定をアプリ側のイベント契約に漏らさないことを重視します。
+この教材はロギングライブラリもトレーシングSDKも再実装しません。第5回の`LogEvent`/`LogAdapter`は**特定のロガーに依存させず**、具体的な出力先は`ConsoleAdapter`です。`debug`/`info`はstdout、`warning`/`error`はstderrへJSONを1行ずつ書きます。LogTapeの導入は第5回の必須要件ではなく、後続回の採用も未確定です。
 
-## 全12回のロードマップ
+## ロードマップ（第5回以降は改訂中・暫定）
 
 各回のタイトルは仮題です。Issueで詳細化し、実装と記事を照合して確定します。
 
@@ -40,7 +40,7 @@
 | 02  | Proxy・Reflect・this      | インスタンスを安全にラップする                                               | `part-02`        |
 | 03  | Proxyの共通化             | 複数のオブジェクト／戻り値への拡張                                           | `part-03`        |
 | 04  | WeakMapと同一性           | `unwrap`、Proxy管理、イベントとの共存                                        | `part-04`        |
-| 05  | 構造化イベントとAdapter   | ロガー非依存の`LogEvent`・`LogAdapter`と単一の`LogTapeAdapter`               | `part-05`        |
+| 05  | 構造化イベントとAdapter   | `OperationEvent`・`createEmitter`・`LogAdapter`・`ConsoleAdapter`           | 改訂タグ未確定   |
 | 06  | イベントカタログ          | ID・カテゴリ・既定レベル・固定メッセージ、レベル上書き                       | `part-06`        |
 | 07  | 拡張可能なマスキング      | 操作別ルール、既定の安全方針、テスト                                         | `part-07`        |
 | 08  | 型安全なフック            | ContextExtractorで操作前後・失敗時の安全な属性を抽出                         | `part-08`        |
@@ -49,7 +49,7 @@
 | 11  | イベント購読と診断ログ    | HTTP/console/ページ例外等の診断イベントと購読解除                            | `part-11`        |
 | 12  | 品質検証                  | 正常・異常・秘匿・並列・性能のテストと計測                                   | `part-12`        |
 
-各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
+第6〜12回の行は旧ロードマップの参考情報であり、改訂版としての実装・順番を確約しません。既存タグは旧版を参照するため、改訂版の完成タグは別途決めます。各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
 
 ## 第1回：高階関数とジェネリクス
 
@@ -125,12 +125,12 @@ Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用�
 
 - カタログを`as const`/`satisfies`等で型安全に定義する
 - イベントIDによるレベル上書きをアプリ側で解決する
-- **レベルによる出力の間引き**はLogTapeに任せる
+- **レベルによる出力の間引き**は第5回では実装せず、必要な段階で検討する
 - メッセージテンプレートエンジンは作らず、まずは固定文言＋構造化属性で扱う
 
 ## LogAdapterの方針（第5回）
 
-`LogEvent`と`LogAdapter`はロガーに依存しない小さな契約とし、具体的な接続実装は`LogTapeAdapter`だけを用意します。LogTapeはフィルタリング、整形、Sink、出力先を担当します。Pinoなどへの差し替えは可能性として説明しますが、教材に別のアダプタは追加しません。
+`OperationEvent`・`LogEvent`・`LogAdapter`は小さな契約とし、`withLog`は実行・計測・通知だけを担当します。`createEmitter`が固定メッセージと既定レベルを付加して出力失敗を隔離し、`ConsoleAdapter`がレベル別consoleメソッドへJSONを渡します。LogTapeへの依存はありません。
 
 ## OpenTelemetry連携の方針（第10回）
 
@@ -199,7 +199,7 @@ vitest.integration.config.ts  統合テストのみを収集
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
 - Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
-- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTape・OpenTelemetryは未導入で、使用する回で決定します。
+- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。LogTape・OpenTelemetryは未導入です。第5回はLogTapeを使わず、将来の採用は改訂時に決定します。
 - 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
