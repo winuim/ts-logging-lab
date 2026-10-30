@@ -83,14 +83,16 @@ describe('withLog', () => {
   });
 
   test('並列実行の時間計測を混同しない', async () => {
-    const first = Promise.withResolvers<string>();
-    const second = Promise.withResolvers<string>();
+    let resolveFirst!: (value: string) => void;
+    let resolveSecond!: (value: string) => void;
+    const first = new Promise<string>((resolve) => { resolveFirst = resolve; });
+    const second = new Promise<string>((resolve) => { resolveSecond = resolve; });
     const run = withLog('parallel', (task: Promise<string>) => task);
-    const a = run(first.promise);
-    const b = run(second.promise);
-    second.resolve('second');
+    const a = run(first);
+    const b = run(second);
+    resolveSecond('second');
     expect(await b).toBe('second');
-    first.resolve('first');
+    resolveFirst('first');
     expect(await a).toBe('first');
     expect(records().map((r) => r.phase)).toEqual(['start', 'start', 'success', 'success']);
   });
