@@ -1,146 +1,97 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-
-import { withLog } from '../../src/index.js';
+import { ConsoleAdapter, createEmitter, withLog } from '../../src/index.js';
+import type { LogAdapter, LogEvent } from '../../src/index.js';
 
 describe('withLog', () => {
-  beforeEach(() => {
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
-  });
+  beforeEach(() => vi.spyOn(console, 'info').mockImplementation(() => undefined));
+  afterEach(() => vi.restoreAllMocks());
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  function records(): LogEvent[] {
+    return vi.mocked(console.info).mock.calls.map(([value]) => JSON.parse(value as string) as LogEvent);
+  }
 
-  test('元の引数・結果の同一性と呼び出し回数を保持する', async () => {
-    const input = { secret: 'dummy-input' };
+  test('開始と成功を通知し、引数と戻り値を変更しない', async () => {
+    const input = { secret: 'dummy-secret' };
     const result = { value: 42 };
-    const fn = vi.fn((value: typeof input, count: number) => {
-      expect(value).toBe(input);
-      expect(count).toBe(2);
-      return Promise.resolve(result);
+    const fn = vi.fn(async (v: typeof input) => {
+      expect(v).toBe(input);
+      return result;
     });
-    const wrapped = withLog('work', fn);
-
-    expect(await wrapped(input, 2)).toBe(result);
-    expect(fn).toHaveBeenCalledExactlyOnceWith(input, 2);
-    expect(input).toEqual({ secret: 'dummy-input' });
-    expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
-      'dummy-input',
-    );
+    const run = withLog('work', fn);
+    expect(await run(input)).toBe(result);
+    expect(fn).toHaveBeenCalledExactlyOnceWith(input);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'success']);
+    expect(records()[1]?.level).toBe('info');
+    expect(records()[1]?.durationMs).toEqual(expect.any(Number));
+    expect(JSON.stringify(records())).not.toContain('dummy-secret');
   });
 
-  test('完了を待ち、開始・成功・単調時計による処理時間を出力する', async () => {
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(100)
-      .mockReturnValueOnce(112.5);
-    const pending = pendingResult();
-    const wrapped = withLog('wait', () => pending.promise);
-
-    const result = wrapped();
-    expect(console.info).toHaveBeenCalledExactlyOnceWith('wait: start');
-    pending.resolve('done');
-
-    expect(await result).toBe('done');
-    expect(console.info).toHaveBeenNthCalledWith(2, 'wait: success (12.50 ms)');
-    expect(console.info).toHaveBeenCalledTimes(2);
+  test('拒否理由をそのまま伝え、秘密の例外メッセージを記録しない', async () => {
+    const error = new Error('dummy-token');
+    const run = withLog('fail', () => Promise.reject(error));
+    await expect(run()).rejects.toBe(error);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'failure']);
+    expect(records()[1]?.level).toBe('error');
+    expect(JSON.stringify(records())).not.toContain('dummy-token');
   });
 
-  test.each([new Error('dummy-secret'), 'dummy-token', undefined])(
-    '拒否理由を変更せず、失敗と処理時間だけを出力する（%s）',
-    async (reason) => {
-      vi.spyOn(performance, 'now')
-        .mockReturnValueOnce(20)
-        .mockReturnValueOnce(24);
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Error以外の拒否理由もそのまま保持する契約を検証する。
-      const wrapped = withLog('reject', () => Promise.reject(reason));
-
-      await expect(wrapped()).rejects.toBe(reason);
-      expect(console.info).toHaveBeenNthCalledWith(1, 'reject: start');
-      expect(console.info).toHaveBeenNthCalledWith(
-        2,
-        'reject: failure (4.00 ms)',
-      );
-      expect(console.info).toHaveBeenCalledTimes(2);
-    },
-  );
-
-  test('Promiseを返す関数の同期throwも同じ理由でrejectする', async () => {
-    const error = new Error('dummy-secret');
-    const wrapped = withLog('sync-throw', (): Promise<never> => {
-      throw error;
+  test('thisと引数を保持する', async () => {
+    const run = withLog('add', function (this: { base: number }, value: number) {
+      return Promise.resolve(this.base + value);
     });
-
-    let result: Promise<never> | undefined;
-    expect(() => {
-      result = wrapped();
-    }).not.toThrow();
-    await expect(result).rejects.toBe(error);
-    expect(console.info).toHaveBeenLastCalledWith(
-      expect.stringMatching(/^sync-throw: failure \(\d+\.\d{2} ms\)$/),
-    );
+    expect(await run.call({ base: 5 }, 7)).toBe(12);
   });
 
-  test('呼び出し側のthisを保持する', async () => {
-    const receiver = {
-      base: 10,
-      add: withLog('add', function (this: { base: number }, amount: number) {
-        return Promise.resolve(this.base + amount);
-      }),
-    };
-
-    expect(await receiver.add(2)).toBe(12);
-    expect(await receiver.add.call({ base: 20 }, 3)).toBe(23);
+  test('同期throwも元の拒否理由でrejectする', async () => {
+    const reason = { reason: 'private' };
+    const run = withLog('throw', (): Promise<never> => { throw reason; });
+    await expect(run()).rejects.toBe(reason);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'failure']);
   });
 
-  test('ログ出力が常に失敗しても本体の結果・拒否理由を保持する', async () => {
-    vi.mocked(console.info).mockImplementation(() => {
-      throw new Error('output unavailable');
-    });
-    const result = { ok: true };
-    const error = new Error('original');
-    const success = withLog('success', () => Promise.resolve(result));
-    const failure = withLog('failure', () => Promise.reject(error));
-
-    expect(await success()).toBe(result);
-    await expect(failure()).rejects.toBe(error);
-    expect(console.info).toHaveBeenCalledTimes(4);
+  test('同期・非同期のAdapter障害が本体へ影響しない', async () => {
+    const error = new Error('adapter broke');
+    const throwing: LogAdapter = { emit() { throw error; } };
+    const rejecting: LogAdapter = { emit() { return Promise.reject(error); } };
+    expect(await withLog('sync', async () => 42, { adapter: throwing })()).toBe(42);
+    expect(await withLog('async', async () => 43, { adapter: rejecting })()).toBe(43);
+    await expect(withLog('fail', () => Promise.reject(error), { adapter: throwing })()).rejects.toBe(error);
   });
 
-  test('並行呼び出しの時間計測を混同せず、生の引数と結果をログに出さない', async () => {
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(10)
-      .mockReturnValueOnce(12)
-      .mockReturnValueOnce(17)
-      .mockReturnValueOnce(25);
-    const first = pendingResult();
-    const second = pendingResult();
-    const wrapped = withLog('parallel', (value: Promise<string>) => value);
-    const a = wrapped(first.promise);
-    const b = wrapped(second.promise);
-    second.resolve('dummy-result-2');
-    expect(await b).toBe('dummy-result-2');
-    first.resolve('dummy-result-1');
-    expect(await a).toBe('dummy-result-1');
+  test('記録用Adapterを差し替えられる', async () => {
+    const events: LogEvent[] = [];
+    const adapter: LogAdapter = { emit(event) { events.push(event); } };
+    await withLog('custom', async () => 1, { adapter })();
+    expect(events.map((event) => event.phase)).toEqual(['start', 'success']);
+    expect(console.info).not.toHaveBeenCalled();
+  });
 
-    expect(vi.mocked(console.info).mock.calls).toEqual([
-      ['parallel: start'],
-      ['parallel: start'],
-      ['parallel: success (5.00 ms)'],
-      ['parallel: success (15.00 ms)'],
+  test('イベント生成と出力を分離する', () => {
+    const events: LogEvent[] = [];
+    const emit = createEmitter({ emit(event) { events.push(event); } });
+    emit({ operation: 'page.goto', phase: 'start' });
+    emit({ operation: 'page.goto', phase: 'success', durationMs: 12.5 });
+    expect(events).toEqual([
+      { operation: 'page.goto', phase: 'start', level: 'info', message: 'Operation started' },
+      { operation: 'page.goto', phase: 'success', durationMs: 12.5, level: 'info', message: 'Operation succeeded' },
     ]);
   });
-});
 
-function pendingResult() {
-  let complete: ((value: string) => void) | undefined;
-  const promise = new Promise<string>((resolve) => {
-    complete = resolve;
+  test('ConsoleAdapterは1行1JSONを出す', () => {
+    new ConsoleAdapter().emit({ operation: 'x', phase: 'start', level: 'info', message: 'Operation started' });
+    expect(records()).toHaveLength(1);
   });
-  return {
-    promise,
-    resolve(value: string) {
-      if (!complete) throw new Error('Promise executor has not initialized');
-      complete(value);
-    },
-  };
-}
+
+  test('並列実行の時間計測を混同しない', async () => {
+    const first = Promise.withResolvers<string>();
+    const second = Promise.withResolvers<string>();
+    const run = withLog('parallel', (task: Promise<string>) => task);
+    const a = run(first.promise);
+    const b = run(second.promise);
+    second.resolve('second');
+    expect(await b).toBe('second');
+    first.resolve('first');
+    expect(await a).toBe('first');
+    expect(records().map((r) => r.phase)).toEqual(['start', 'start', 'success', 'success']);
+  });
+});
