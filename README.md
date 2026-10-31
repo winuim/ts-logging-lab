@@ -152,12 +152,11 @@ Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用�
 
 ## セットアップ
 
-Node.js **24.22.1**（24系LTS）とnpm **11.21.1**を使用します。nvmを使う場合は次の手順で準備できます。別のバージョン管理ツールでも同じバージョンを指定してください。
+Node.js **26系LTSのみ**をサポートします。パッチバージョンは固定せず、26系の最新パッチを使用してください。npmのバージョン制約は設けず、通常はNode.jsに同梱されたnpmを使用します。nvmを使う場合は次の手順で準備できます。別のバージョン管理ツールでも26系を指定してください。
 
 ```sh
 nvm install
 nvm use
-npm install --global npm@11.21.1
 npm ci
 ```
 
@@ -193,7 +192,8 @@ vitest.config.ts              単体テストのみを収集
 vitest.integration.config.ts  統合テストのみを収集
 ```
 
-- Node.js 24系LTSとnpm 11系を採用し、`.nvmrc`と`packageManager`で検証バージョンを固定します。`engines`と`.npmrc`で異なるメジャーの利用を検出します。
+- Node.jsのサポート範囲は`engines.node`の`>=26 <27`で示し、`.nvmrc`は`26`を指定します。`.npmrc`は`save-exact=true`のみとし、`engine-strict`は設定しません。`engines.npm`による制約も設けません。`packageManager`は従来のnpmメタデータとして維持しますが、指定バージョンへの切り替えやグローバルインストールは必須にしません。通常の`npm ci`はこの値でnpmのバージョンを強制しません。
+- lockfile内の直接・間接依存の`engines.node`が26系を許容することを確認しています。`@types/node`は既存の24系を維持します。これは型定義のバージョンであり、Node.js 24系の実行時サポートを意味しません。
 - TypeScript **6.0.3**、Vitest **5.0.5**、ESLint **10.13.0**、`@eslint/js` **10.0.1**、typescript-eslint **8.72.1**、Prettier **3.9.10**、`@types/node` **24.19.2**を完全固定しています。間接依存はlockfileで固定します。TypeScriptはtypescript-eslintの対応範囲（`<6.1.0`）に合わせています。
 - Node.jsでそのまま実行できるESM（`type: module`、`NodeNext`）を使い、相対importには`.js`拡張子を書きます。ビルドは`tsc`だけで行い、バンドラーや独自ランナーは追加しません。
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。

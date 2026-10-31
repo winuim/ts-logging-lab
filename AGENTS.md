@@ -101,6 +101,7 @@ READMEの改訂方針を参照してください。第1〜4回は維持し、第
 ## 開発環境と検証
 
 - バージョン・セットアップ・実行コマンド・ディレクトリ構成はREADMEの「セットアップ」を正とする。依存更新時はpackage.json、lockfile、READMEを同期する。
+- Node.jsは26系のみをサポートする。`engines.node`は`>=26 <27`、`.nvmrc`は`26`とし、パッチバージョンは固定しない。npmのバージョン制約と`engine-strict=true`は設けず、`.npmrc`は`save-exact=true`のみとする。`packageManager`は既存メタデータとして維持するが、そのnpmバージョンの導入を必須にしない。依存バージョンは原則維持し、26系への対応を確認する。
 - GitHub Actionsは課金しない方針のため使用しない。明示的な方針変更の依頼なしにワークフローを追加・有効化しない。検証はローカルで実行してPRに結果を記録する。
 - PR前に`npm run typecheck`、`npm test`、`npm run build`、`node dist/index.js`、`npm run lint`、`npm run format:check`を実行する。
 - ブラウザ不要のテストは`tests/unit/`、Puppeteerが必要なテストは`tests/integration/`に置く。単体テストへブラウザ準備を持ち込まない。
