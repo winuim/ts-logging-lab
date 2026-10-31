@@ -17,10 +17,18 @@ export function withLog<This, Args extends unknown[], Result>(
     const startedAt = performance.now();
     try {
       const result = await fn.apply(this, args);
-      emit({ operation, phase: 'success', durationMs: performance.now() - startedAt });
+      emit({
+        operation,
+        phase: 'success',
+        durationMs: performance.now() - startedAt,
+      });
       return result;
     } catch (error: unknown) {
-      emit({ operation, phase: 'failure', durationMs: performance.now() - startedAt });
+      emit({
+        operation,
+        phase: 'failure',
+        durationMs: performance.now() - startedAt,
+      });
       throw error;
     }
   };

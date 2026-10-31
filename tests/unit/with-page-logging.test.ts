@@ -102,7 +102,10 @@ describe('withPageLogging', () => {
     expect(await goto('dummy-token')).toBeNull();
     expect(raw.calls).toBe(1);
     expect(page.url()).toBe('dummy-token');
-    expect(console.info).toHaveBeenNthCalledWith(1, expect.stringContaining('"phase":"start"'));
+    expect(console.info).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('"phase":"start"'),
+    );
     expect(console.info).toHaveBeenLastCalledWith(
       expect.stringContaining('"phase":"success"'),
     );
@@ -123,9 +126,12 @@ describe('withPageLogging', () => {
       expect(console.error).toHaveBeenLastCalledWith(
         expect.stringContaining('"phase":"failure"'),
       );
-      expect(JSON.stringify([vi.mocked(console.info).mock.calls, vi.mocked(console.error).mock.calls])).not.toContain(
-        'dummy-secret',
-      );
+      expect(
+        JSON.stringify([
+          vi.mocked(console.info).mock.calls,
+          vi.mocked(console.error).mock.calls,
+        ]),
+      ).not.toContain('dummy-secret');
     },
   );
 

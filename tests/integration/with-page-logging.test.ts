@@ -23,7 +23,7 @@ beforeEach(async () => {
   if (!browser) throw new Error('Browser is not initialized');
   raw = await browser.newPage();
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 afterEach(async () => {
@@ -89,9 +89,12 @@ test('実Pageのgotoが返す拒否理由を置き換えない', async () => {
   expect(console.error).toHaveBeenLastCalledWith(
     expect.stringContaining('"phase":"failure"'),
   );
-  expect(JSON.stringify([vi.mocked(console.info).mock.calls, vi.mocked(console.error).mock.calls])).not.toContain(
-    'dummy-secret',
-  );
+  expect(
+    JSON.stringify([
+      vi.mocked(console.info).mock.calls,
+      vi.mocked(console.error).mock.calls,
+    ]),
+  ).not.toContain('dummy-secret');
 });
 
 test('実際の不正URLも失敗ログを出してrejectする', async () => {

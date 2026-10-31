@@ -29,10 +29,16 @@ const messages: Record<LogPhase, string> = {
 };
 
 /** 変換と安全な出力を一か所に集め、実行制御から切り離す。 */
-export function createEmitter(adapter: LogAdapter): (event: OperationEvent) => void {
+export function createEmitter(
+  adapter: LogAdapter,
+): (event: OperationEvent) => void {
   return (event) => {
     const logEvent: LogEvent = {
-      ...event,
+      operation: event.operation,
+      phase: event.phase,
+      ...(event.durationMs === undefined
+        ? {}
+        : { durationMs: event.durationMs }),
       level: levels[event.phase],
       message: messages[event.phase],
     };

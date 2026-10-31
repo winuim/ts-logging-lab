@@ -19,9 +19,9 @@
 | この教材で設計・実装するもの                               | 第5回では実装しない／将来検討するもの                         |
 | ---------------------------------------------------------- | ------------------------------------------------------------- |
 | HOF/Proxyによる処理へのログ付与                            | ログレベルによる出力フィルタリング                            |
-| OperationEvent・LogEvent・LogAdapter、イベント生成        | 高度なSink/Formatterや出力基盤                                |
+| OperationEvent・LogEvent・LogAdapter、イベント生成         | 高度なSink/Formatterや出力基盤                                |
 | イベントID・カテゴリ・既定レベル・固定メッセージのカタログ | 出力先、ファイル管理、ローテーション                          |
-| レベル別console出力（第5回）・割り当てレベル上書き（構想） | 非同期出力の完了保証・バッファリング                           |
+| レベル別console出力（第5回）・割り当てレベル上書き（構想） | 非同期出力の完了保証・バッファリング                          |
 | 操作の文脈に応じたマスキングと安全な属性抽出               | 汎用的なロギング機能                                          |
 | OpenTelemetryからの相関情報取得・ログへの付与              | traceId/spanId生成、Span管理・コンテキスト伝播はOpenTelemetry |
 | WeakMapによるアプリ固有のリソース識別                      | ログ基盤の運用機構                                            |
@@ -40,7 +40,7 @@
 | 02  | Proxy・Reflect・this      | インスタンスを安全にラップする                                               | `part-02`        |
 | 03  | Proxyの共通化             | 複数のオブジェクト／戻り値への拡張                                           | `part-03`        |
 | 04  | WeakMapと同一性           | `unwrap`、Proxy管理、イベントとの共存                                        | `part-04`        |
-| 05  | 構造化イベントとAdapter   | `OperationEvent`・`createEmitter`・`LogAdapter`・`ConsoleAdapter`           | 改訂タグ未確定   |
+| 05  | 構造化イベントとAdapter   | `OperationEvent`・`createEmitter`・`LogAdapter`・`ConsoleAdapter`            | 改訂タグ未確定   |
 | 06  | イベントカタログ          | ID・カテゴリ・既定レベル・固定メッセージ、レベル上書き                       | `part-06`        |
 | 07  | 拡張可能なマスキング      | 操作別ルール、既定の安全方針、テスト                                         | `part-07`        |
 | 08  | 型安全なフック            | ContextExtractorで操作前後・失敗時の安全な属性を抽出                         | `part-08`        |
