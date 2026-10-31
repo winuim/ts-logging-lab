@@ -10,7 +10,7 @@ export function withLog<This, Args extends unknown[], Result>(
   fn: (this: This, ...args: Args) => Promise<Result>,
   options: LogOptions = {},
 ): (this: This, ...args: Args) => Promise<Result> {
-  const emit = createEmitter(options.adapter ?? defaultAdapter);
+  const emit = createEmitter(options.adapter ?? defaultAdapter, options);
 
   return async function (this: This, ...args: Args): Promise<Result> {
     emit({ operation, phase: 'start' });
