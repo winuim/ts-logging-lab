@@ -1,3 +1,5 @@
+import { currentRunId } from './run-context.js';
+
 export type LogPhase = 'start' | 'success' | 'failure';
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 
@@ -7,6 +9,7 @@ export interface OperationEvent {
   readonly durationMs?: number;
 }
 export interface LogEvent extends OperationEvent {
+  readonly runId?: string;
   readonly category?: string;
   readonly level: LogLevel;
   readonly message: string;
@@ -46,6 +49,7 @@ export function createEmitter(
     failure: options.levels?.failure ?? defaultLevels.failure,
   };
   return (event) => {
+    const runId = currentRunId();
     const logEvent: LogEvent = {
       operation: event.operation,
       phase: event.phase,
@@ -53,6 +57,7 @@ export function createEmitter(
         ? {}
         : { durationMs: event.durationMs }),
       ...(category === undefined ? {} : { category }),
+      ...(runId === undefined ? {} : { runId }),
       level: levels[event.phase],
       message: messages[event.phase],
     };

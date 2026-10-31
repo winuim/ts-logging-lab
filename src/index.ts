@@ -1,4 +1,6 @@
 export { withLog } from './with-log.js';
+export { withRunContext } from './run-context.js';
+export type { RunContext } from './run-context.js';
 export { createEmitter } from './log-event.js';
 export type {
   LogPhase,
