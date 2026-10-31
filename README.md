@@ -4,7 +4,7 @@
 
 高階関数、Proxy/Reflect、WeakMap、Adapter、カテゴリとログレベル、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第7回までの改訂を `rewrite-series` に反映、第8回の実装を追加** — 第7回ではAsyncLocalStorageで一連の処理のrunIdを保持します。第8回はoperationIdとフェーズ別ContextExtractorを扱います。第9回以降は改訂内容が未確定です。教材PRは `rewrite-series` 向けに作成し、既存の `main` と `part-XX` タグは変更しません。
+> **ステータス：第8回までの改訂を `rewrite-series` に反映、第9回の実装を追加** — 第7回ではAsyncLocalStorageで一連の処理のrunIdを保持します。第8回はoperationIdとフェーズ別ContextExtractor、第9回はPinoAdapterによる既存ロガーとの接続を扱います。第10回以降は改訂内容が未確定です。教材PRは `rewrite-series` 向けに作成し、既存の `main` と `part-XX` タグは変更しません。
 
 ## このプロジェクトで学ぶこと
 
@@ -33,7 +33,7 @@
 
 ## ロードマップ（第5回以降は改訂中・暫定）
 
-合意済みの回について、依頼されたIssueの範囲で実装します。第9回以降のタイトル・構成・順番は未確定です。旧ロードマップだけを根拠にIssueを作成したり、後続回を実装したりしません。
+合意済みの回について、依頼されたIssueの範囲で実装します。第10回以降のタイトル・構成・順番は未確定です。旧ロードマップだけを根拠にIssueを作成したり、後続回を実装したりしません。
 
 | 回     | 主題                        | 追加する仕組み                                                        | 既存タグ／改訂版タグ |
 | ------ | --------------------------- | --------------------------------------------------------------------- | -------------------- |
@@ -45,9 +45,10 @@
 | 06     | カテゴリとログレベル        | 呼び出し側の分類とフェーズ別レベル、既定値へのフォールバック          | 改訂タグ未確定       |
 | 07     | AsyncLocalStorageと実行文脈 | 呼び出し側指定のrunIdを処理単位で保持し、イベント生成時に付与         | 改訂タグ未確定       |
 | 08     | 呼び出しIDと属性抽出        | 自動operationId、フェーズ別ContextExtractorと実行制御の責務分離       | 改訂タグ未確定       |
-| 09以降 | 未確定                      | マスキング・リソース識別・OpenTelemetry連携等は構成と導入時期を再検討 | 改訂タグ未確定       |
+| 09     | Adapterと既存ロガー         | PinoAdapterでPinoのレベルフィルタ・Redaction・JSON出力を利用          | 改訂タグ未確定       |
+| 10以降 | 未確定                      | マスキング・リソース識別・OpenTelemetry連携等は構成と導入時期を再検討 | 改訂タグ未確定       |
 
-第9回以降の構成・順番は未確定です。第1〜4回は既存タグを維持します。既存の`part-XX`タグは移動・上書きしません。改訂版のタグ方針は未確定で、実装完了やマージ完了だけを根拠にタグを作成・pushしません。各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
+第10回以降の構成・順番は未確定です。第1〜4回は既存タグを維持します。既存の`part-XX`タグは移動・上書きしません。改訂版のタグ方針は未確定で、実装完了やマージ完了だけを根拠にタグを作成・pushしません。各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
 
 ## 第1回：高階関数とジェネリクス
 
@@ -167,6 +168,20 @@ await Promise.all([
 
 **OpenTelemetryの標準API/SDKにtraceId・spanIdの生成、Spanの親子管理、非同期コンテキスト伝播を任せます。** OpenTelemetry用ContextManagerやトレースID生成器は自作しません。第7回のアプリ内runId文脈はNode.js標準の`AsyncLocalStorage.run()`で保持し、OpenTelemetryの文脈とは別に扱います。今後この構想が合意され、実装を依頼された場合に、アクティブSpanから有効なSpanContextを取得し、ログの構造化属性に安全に付与する**薄い連携部分**を扱います。Spanがない場合を許容し、特定のロガー固有の機能に依存しない設計を想定しています。教材の主題はOpenTelemetry SDKの再実装でも、全機能の解説でもありません。
 
+## Adapterと既存ロガー（第9回）
+
+[Issue #47](https://github.com/winuim/ts-logging-lab/issues/47)では`new PinoAdapter(logger)`を`LogOptions.adapter`へ渡します。Pinoの生成と設定はアプリ側で行い、共通のログ生成・文脈取得・属性抽出は第8回のままです。既定の出力先は引き続きConsoleAdapterです。
+
+PinoAdapterは`warning`を`warn`へ対応させ、`level`をPino標準の数値、`message`を`msg`へ変換します。`time`はPinoが出力時に付けます。他のイベント属性は意味を維持し、`attributes`はネストした名前空間のまま渡します。Pinoの`level`設定による出力抑制と、Emitterによるフェーズ別レベルの割り当ては別の責務です。
+
+`redact.paths`は実際の構造に合わせて`attributes.email`等を指定します。この保護は設定したPinoを経由する出力だけに適用され、ConsoleAdapterには及びません。Extractorでは必要な安全な属性だけを選ぶことが第一の対策です。未設定パスやログ処理前の保持、他Adapterへの流出は防ぎません。同期throwの隔離は従来のEmitterが担当し、ストリームの遅延障害・flush完了は保証しません。
+
+```sh
+npm run example:part-09
+```
+
+ブラウザ不要の実行例はdebugの開始を抑制し、成功のダミー属性をRedactionし、失敗には安全な分類だけを残します。[設計・実出力例・検証と限界](docs/part-09.md)を参照してください。Zenn記事は別作業です。
+
 ## マスキングの構想（導入時期・構成は未確定）
 
 特定のロガーが提供するRedaction機能を前提とせず、**操作の意味に合わせてログ化前に安全な値を選ぶ**方法を構想しています。判定材料がない入力値は既定で秘匿する方向とし、追加ルールや例外・カスタムフックからの情報流出の検証も検討します。具体的な構成は未確定であり、ユーザーと合意し、実装を依頼された範囲で扱います。
@@ -174,7 +189,7 @@ await Promise.all([
 ## 開発と記事の対応
 
 1. 合意済みの仕様を、依頼された範囲でREADME/AGENTS.mdへ同期する。仕様の同期と、エージェントの実行権限の変更を区別する。
-2. 合意済みの回について、依頼されたIssueの範囲で実装する。Issue作成の依頼は実装の許可を、実装の依頼はマージの許可を含まない。第9回以降は構成未確定であり、旧ロードマップだけを根拠にIssue作成や後続回の実装を進めない。
+2. 合意済みの回について、依頼されたIssueの範囲で実装する。Issue作成の依頼は実装の許可を、実装の依頼はマージの許可を含まない。第10回以降は構成未確定であり、旧ロードマップだけを根拠にIssue作成や後続回の実装を進めない。
 3. 改訂作業は`rewrite-series`からブランチとPRを作成し、実装・検証・レビュー対応までで結果を報告する。**マージは対象PRについてユーザーから明示的な依頼がある場合のみ行う。** レビュー・検証の成功だけではマージせず、自動マージの有効化にも別途明示的な依頼を必要とする。
 4. 依頼に基づくマージ後は、対象PRのマージ先ブランチを最新化して切り替える。改訂作業では`rewrite-series`を使う。マージ済み作業ブランチの削除前にPRのマージ状態と対象ブランチを確認する。未コミット・未反映の変更は切り替えや削除で失わないよう保護し、作業ブランチを削除しない。
 5. タグの作成・pushは、タグ名・対象コミット・実施する操作についてユーザーから明示的な依頼がある場合のみ行う。実装完了やマージ完了だけを根拠に実行しない。既存の`part-XX`タグは移動・上書きせず、改訂版のタグ方針は未確定として扱う。
@@ -207,6 +222,7 @@ npm ci
 | `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし） |
 | `npm run example:part-01`        | 第1回の成功・失敗の実行例                                       |
 | `npm run browser:install`        | Puppeteerが指定するChromeを取得                                 |
+| `npm run example:part-09`        | 第9回のPinoによる出力抑制・Redactionの実行例                    |
 | `npm run example:part-08`        | 第8回の並列operationId・安全な属性抽出の実行例                  |
 | `npm run example:part-07`        | 第7回の並行runId・入れ子・キャッシュ済み子ラッパーの実行例      |
 | `npm run example:part-06`        | 第6回のカテゴリ・レベル設定とProxyの実行例                      |
@@ -236,7 +252,7 @@ vitest.integration.config.ts  統合テストのみを収集
 - `strict`に加え、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、未使用・分岐の検査などを有効にします。テストと設定も型検査し、配布用ビルドには`src/`のみを含めます。
 - ESLintは型情報を使う厳格なルールを採用し、`any`・非nullアサーション・型アサーションを禁止します。整形はPrettierに任せます。
 - Puppeteerが必要なテストは`tests/integration/**/*.test.ts`に置きます。単体テストはこのディレクトリを収集しません。第2回で統合テストとローカルでのブラウザ準備を追加しました。空のテスト群を成功扱いにしません。
-- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。現在の依存関係にLogTape・OpenTelemetryは含まれていません。
+- Puppeteer **25.16.0**を開発依存として完全固定しました。Pageの型定義とevaluate内のDOM参照のため、tsconfigのlibにDOM・DOM.Iterableを加えています。型定義を追加しても、Node.js実行時にwindowやdocumentが生えるわけではありません。第9回でPino **10.4.0**を実行時依存として完全固定しました。Pinoの型は新しいAdapterに閉じ込め、共通イベントはロガー非依存を維持します。現在の依存関係にLogTape・OpenTelemetryは含まれていません。
 - 第1回のテストはESM公開API経由で、成功・失敗・同期throw・引数と結果の同一性・`this`・並行計測・出力失敗を検証します。型テストの正しい呼び出しと`@ts-expect-error`による不正な呼び出しも`npm run typecheck`で確認します。
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。

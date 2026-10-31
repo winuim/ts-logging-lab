@@ -14,6 +14,7 @@ export type {
   ContextExtractor,
 } from './log-event.js';
 export { ConsoleAdapter } from './console-adapter.js';
+export { PinoAdapter } from './pino-adapter.js';
 export {
   withPageLogging,
   withBrowserLogging,
