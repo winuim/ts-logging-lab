@@ -49,6 +49,7 @@ class PageFixture {
 describe('withPageLogging', () => {
   beforeEach(() => {
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -101,11 +102,15 @@ describe('withPageLogging', () => {
     expect(await goto('dummy-token')).toBeNull();
     expect(raw.calls).toBe(1);
     expect(page.url()).toBe('dummy-token');
-    expect(console.info).toHaveBeenNthCalledWith(1, 'page.goto: start');
+    expect(console.info).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('"phase":"start"'),
+    );
     expect(console.info).toHaveBeenLastCalledWith(
-      expect.stringMatching(/^page.goto: success \(\d+\.\d{2} ms\)$/),
+      expect.stringContaining('"phase":"success"'),
     );
     expect(console.info).toHaveBeenCalledTimes(2);
+    expect(console.error).not.toHaveBeenCalled();
     expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
       'dummy-token',
     );
@@ -118,12 +123,15 @@ describe('withPageLogging', () => {
       const page = withPageLogging(raw);
       await expect(page.goto(url)).rejects.toBe(raw.error);
       expect(raw.calls).toBe(1);
-      expect(console.info).toHaveBeenLastCalledWith(
-        expect.stringMatching(/^page.goto: failure \(\d+\.\d{2} ms\)$/),
+      expect(console.error).toHaveBeenLastCalledWith(
+        expect.stringContaining('"phase":"failure"'),
       );
-      expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
-        'dummy-secret',
-      );
+      expect(
+        JSON.stringify([
+          vi.mocked(console.info).mock.calls,
+          vi.mocked(console.error).mock.calls,
+        ]),
+      ).not.toContain('dummy-secret');
     },
   );
 

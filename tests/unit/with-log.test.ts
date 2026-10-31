@@ -1,112 +1,168 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-
-import { withLog } from '../../src/index.js';
+import { ConsoleAdapter, createEmitter, withLog } from '../../src/index.js';
+import type { LogAdapter, LogEvent } from '../../src/index.js';
+import { logRecords } from '../helpers/log-records.js';
 
 describe('withLog', () => {
   beforeEach(() => {
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
+  afterEach(() => vi.restoreAllMocks());
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  function records(): LogEvent[] {
+    return logRecords([
+      ...vi.mocked(console.info).mock.calls,
+      ...vi.mocked(console.error).mock.calls,
+    ]);
+  }
 
-  test('元の引数・結果の同一性と呼び出し回数を保持する', async () => {
-    const input = { secret: 'dummy-input' };
-    const result = { value: 42 };
-    const fn = vi.fn((value: typeof input, count: number) => {
-      expect(value).toBe(input);
+  test('開始と成功を通知し、引数と戻り値を変更しない', async () => {
+    const input = { secret: 'dummy-secret' };
+    const result = { value: 42, secret: 'dummy-result' };
+    const fn = vi.fn((v: typeof input, count: number) => {
+      expect(v).toBe(input);
       expect(count).toBe(2);
       return Promise.resolve(result);
     });
-    const wrapped = withLog('work', fn);
-
-    expect(await wrapped(input, 2)).toBe(result);
+    const run = withLog('work', fn);
+    expect(await run(input, 2)).toBe(result);
     expect(fn).toHaveBeenCalledExactlyOnceWith(input, 2);
-    expect(input).toEqual({ secret: 'dummy-input' });
-    expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
-      'dummy-input',
+    expect(input).toEqual({ secret: 'dummy-secret' });
+    expect(records().map((r) => r.phase)).toEqual(['start', 'success']);
+    expect(records()[1]?.level).toBe('info');
+    expect(records()[1]?.durationMs).toEqual(expect.any(Number));
+    expect(JSON.stringify(records())).not.toContain('dummy-secret');
+    expect(JSON.stringify(records())).not.toContain('dummy-result');
+  });
+
+  test('拒否理由をそのまま伝え、秘密の例外メッセージを記録しない', async () => {
+    const error = new Error('dummy-token');
+    const run = withLog('fail', () => Promise.reject(error));
+    await expect(run()).rejects.toBe(error);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'failure']);
+    expect(records()[1]?.level).toBe('error');
+    expect(JSON.stringify(records())).not.toContain('dummy-token');
+  });
+
+  test('thisと引数を保持する', async () => {
+    const run = withLog(
+      'add',
+      function (this: { base: number }, value: number) {
+        return Promise.resolve(this.base + value);
+      },
     );
+    expect(await run.call({ base: 5 }, 7)).toBe(12);
   });
 
-  test('完了を待ち、開始・成功・単調時計による処理時間を出力する', async () => {
-    vi.spyOn(performance, 'now')
-      .mockReturnValueOnce(100)
-      .mockReturnValueOnce(112.5);
-    const pending = pendingResult();
-    const wrapped = withLog('wait', () => pending.promise);
-
-    const result = wrapped();
-    expect(console.info).toHaveBeenCalledExactlyOnceWith('wait: start');
-    pending.resolve('done');
-
-    expect(await result).toBe('done');
-    expect(console.info).toHaveBeenNthCalledWith(2, 'wait: success (12.50 ms)');
-    expect(console.info).toHaveBeenCalledTimes(2);
+  test('同期throwも元の拒否理由でrejectする', async () => {
+    const reason = new Error('dummy-private');
+    const run = withLog('throw', (): Promise<never> => {
+      throw reason;
+    });
+    await expect(run()).rejects.toBe(reason);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'failure']);
   });
 
-  test.each([new Error('dummy-secret'), 'dummy-token', undefined])(
-    '拒否理由を変更せず、失敗と処理時間だけを出力する（%s）',
-    async (reason) => {
-      vi.spyOn(performance, 'now')
-        .mockReturnValueOnce(20)
-        .mockReturnValueOnce(24);
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Error以外の拒否理由もそのまま保持する契約を検証する。
-      const wrapped = withLog('reject', () => Promise.reject(reason));
+  test('同期・非同期のAdapter障害が本体へ影響しない', async () => {
+    const error = new Error('adapter broke');
+    const throwing: LogAdapter = {
+      emit() {
+        throw error;
+      },
+    };
+    const rejecting: LogAdapter = {
+      emit() {
+        return Promise.reject(error);
+      },
+    };
+    expect(
+      await withLog('sync', () => Promise.resolve(42), { adapter: throwing })(),
+    ).toBe(42);
+    expect(
+      await withLog('async', () => Promise.resolve(43), {
+        adapter: rejecting,
+      })(),
+    ).toBe(43);
+    await expect(
+      withLog('fail', () => Promise.reject(error), { adapter: throwing })(),
+    ).rejects.toBe(error);
+    await expect(
+      withLog('fail', () => Promise.reject(error), { adapter: rejecting })(),
+    ).rejects.toBe(error);
+  });
 
-      await expect(wrapped()).rejects.toBe(reason);
-      expect(console.info).toHaveBeenNthCalledWith(1, 'reject: start');
-      expect(console.info).toHaveBeenNthCalledWith(
-        2,
-        'reject: failure (4.00 ms)',
+  test('記録用Adapterを差し替えられる', async () => {
+    const events: LogEvent[] = [];
+    const adapter: LogAdapter = {
+      emit(event) {
+        events.push(event);
+      },
+    };
+    await withLog('custom', () => Promise.resolve(1), { adapter })();
+    expect(events.map((event) => event.phase)).toEqual(['start', 'success']);
+    expect(console.info).not.toHaveBeenCalled();
+  });
+
+  test('イベント生成と出力を分離する', () => {
+    const events: LogEvent[] = [];
+    const emit = createEmitter({
+      emit(event) {
+        events.push(event);
+      },
+    });
+    emit({ operation: 'page.goto', phase: 'start' });
+    emit({ operation: 'page.goto', phase: 'success', durationMs: 12.5 });
+    expect(events).toEqual([
+      {
+        operation: 'page.goto',
+        phase: 'start',
+        level: 'info',
+        message: 'Operation started',
+      },
+      {
+        operation: 'page.goto',
+        phase: 'success',
+        durationMs: 12.5,
+        level: 'info',
+        message: 'Operation succeeded',
+      },
+    ]);
+  });
+
+  test.each([
+    ['debug', 'debug'],
+    ['info', 'info'],
+    ['warning', 'warn'],
+    ['error', 'error'],
+  ] as const)(
+    'ConsoleAdapterは%sをconsole.%sにNDJSON出力する',
+    (level, method) => {
+      const event: LogEvent = {
+        operation: 'x',
+        phase: 'start',
+        level,
+        message: 'Operation started',
+      };
+      new ConsoleAdapter().emit(event);
+      expect(vi.spyOn(console, method).mock.calls).toEqual([
+        [JSON.stringify(event)],
+      ]);
+      const calls = [
+        vi.mocked(console.debug).mock.calls,
+        vi.mocked(console.info).mock.calls,
+        vi.mocked(console.warn).mock.calls,
+        vi.mocked(console.error).mock.calls,
+      ];
+      expect(calls.reduce((count, entries) => count + entries.length, 0)).toBe(
+        1,
       );
-      expect(console.info).toHaveBeenCalledTimes(2);
     },
   );
 
-  test('Promiseを返す関数の同期throwも同じ理由でrejectする', async () => {
-    const error = new Error('dummy-secret');
-    const wrapped = withLog('sync-throw', (): Promise<never> => {
-      throw error;
-    });
-
-    let result: Promise<never> | undefined;
-    expect(() => {
-      result = wrapped();
-    }).not.toThrow();
-    await expect(result).rejects.toBe(error);
-    expect(console.info).toHaveBeenLastCalledWith(
-      expect.stringMatching(/^sync-throw: failure \(\d+\.\d{2} ms\)$/),
-    );
-  });
-
-  test('呼び出し側のthisを保持する', async () => {
-    const receiver = {
-      base: 10,
-      add: withLog('add', function (this: { base: number }, amount: number) {
-        return Promise.resolve(this.base + amount);
-      }),
-    };
-
-    expect(await receiver.add(2)).toBe(12);
-    expect(await receiver.add.call({ base: 20 }, 3)).toBe(23);
-  });
-
-  test('ログ出力が常に失敗しても本体の結果・拒否理由を保持する', async () => {
-    vi.mocked(console.info).mockImplementation(() => {
-      throw new Error('output unavailable');
-    });
-    const result = { ok: true };
-    const error = new Error('original');
-    const success = withLog('success', () => Promise.resolve(result));
-    const failure = withLog('failure', () => Promise.reject(error));
-
-    expect(await success()).toBe(result);
-    await expect(failure()).rejects.toBe(error);
-    expect(console.info).toHaveBeenCalledTimes(4);
-  });
-
-  test('並行呼び出しの時間計測を混同せず、生の引数と結果をログに出さない', async () => {
+  test('並列実行の時間計測を混同しない', async () => {
     vi.spyOn(performance, 'now')
       .mockReturnValueOnce(10)
       .mockReturnValueOnce(12)
@@ -114,22 +170,66 @@ describe('withLog', () => {
       .mockReturnValueOnce(25);
     const first = pendingResult();
     const second = pendingResult();
-    const wrapped = withLog('parallel', (value: Promise<string>) => value);
-    const a = wrapped(first.promise);
-    const b = wrapped(second.promise);
-    second.resolve('dummy-result-2');
-    expect(await b).toBe('dummy-result-2');
-    first.resolve('dummy-result-1');
-    expect(await a).toBe('dummy-result-1');
-
-    expect(vi.mocked(console.info).mock.calls).toEqual([
-      ['parallel: start'],
-      ['parallel: start'],
-      ['parallel: success (5.00 ms)'],
-      ['parallel: success (15.00 ms)'],
+    const run = withLog('parallel', (task: Promise<string>) => task);
+    const a = run(first.promise);
+    const b = run(second.promise);
+    expect(records().map((r) => r.phase)).toEqual(['start', 'start']);
+    second.resolve('second');
+    expect(await b).toBe('second');
+    first.resolve('first');
+    expect(await a).toBe('first');
+    expect(records().map((r) => r.phase)).toEqual([
+      'start',
+      'start',
+      'success',
+      'success',
+    ]);
+    expect(records().map((r) => r.durationMs)).toEqual([
+      undefined,
+      undefined,
+      5,
+      15,
     ]);
   });
 });
+
+// Error以外の拒否理由もコピーや正規化をせず伝える。
+test.each(['dummy-token', undefined, { secret: 'dummy-cookie' }])(
+  'Error以外の拒否理由も保持する: %s',
+  async (reason) => {
+    const events: LogEvent[] = [];
+    const adapter: LogAdapter = {
+      emit: (event) => {
+        events.push(event);
+      },
+    };
+    vi.spyOn(performance, 'now')
+      .mockReturnValueOnce(20)
+      .mockReturnValueOnce(24);
+    try {
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- 任意の拒否理由を保持する契約を検証する。
+      const run = withLog('reject', () => Promise.reject(reason), { adapter });
+      await expect(run()).rejects.toBe(reason);
+      expect(events).toEqual([
+        {
+          operation: 'reject',
+          phase: 'start',
+          level: 'info',
+          message: 'Operation started',
+        },
+        {
+          operation: 'reject',
+          phase: 'failure',
+          durationMs: 4,
+          level: 'error',
+          message: 'Operation failed',
+        },
+      ]);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  },
+);
 
 function pendingResult() {
   let complete: ((value: string) => void) | undefined;
