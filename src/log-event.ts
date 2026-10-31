@@ -2,11 +2,24 @@ import { currentRunId } from './run-context.js';
 
 export type LogPhase = 'start' | 'success' | 'failure';
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
+export type LogAttributes = Readonly<
+  Record<string, string | number | boolean | null>
+>;
+export interface ContextExtractor<
+  Args extends unknown[] = unknown[],
+  Result = unknown,
+> {
+  readonly start?: (args: Args) => LogAttributes;
+  readonly success?: (result: Result) => LogAttributes;
+  readonly failure?: (error: unknown) => LogAttributes;
+}
 
 export interface OperationEvent {
   readonly operation: string;
   readonly phase: LogPhase;
   readonly durationMs?: number;
+  readonly operationId?: string;
+  readonly attributes?: LogAttributes;
 }
 export interface LogEvent extends OperationEvent {
   readonly runId?: string;
@@ -22,8 +35,12 @@ export interface EmitterOptions {
   readonly levels?:
     Readonly<Partial<Record<LogPhase, LogLevel | undefined>>> | undefined;
 }
-export interface LogOptions extends EmitterOptions {
+export interface LogOptions<
+  Args extends unknown[] = unknown[],
+  Result = unknown,
+> extends EmitterOptions {
   readonly adapter?: LogAdapter;
+  readonly extractor?: ContextExtractor<Args, Result>;
 }
 
 const defaultLevels: Readonly<Record<LogPhase, LogLevel>> = {
@@ -56,6 +73,12 @@ export function createEmitter(
       ...(event.durationMs === undefined
         ? {}
         : { durationMs: event.durationMs }),
+      ...(event.operationId === undefined
+        ? {}
+        : { operationId: event.operationId }),
+      ...(event.attributes === undefined
+        ? {}
+        : { attributes: event.attributes }),
       ...(category === undefined ? {} : { category }),
       ...(runId === undefined ? {} : { runId }),
       level: levels[event.phase],
