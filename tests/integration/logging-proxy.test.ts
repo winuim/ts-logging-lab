@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { expect, test, vi } from 'vitest';
 import { withBrowserLogging } from '../../src/index.js';
+import type { LogEvent } from '../../src/index.js';
 
 test('BrowserからPage・Keyboard・Locatorへ渡り、チェーン後もログ化する', async () => {
   const output = vi.spyOn(console, 'info').mockImplementation(() => undefined);
@@ -15,18 +16,24 @@ test('BrowserからPage・Keyboard・Locatorへ渡り、チェーン後もログ
     await page.locator('input').setTimeout(1000).fill('replaced');
     await page.locator('button').setTimeout(1000).click();
     expect(await page.$eval('input', (input) => input.value)).toBe('replaced');
-    const logs = JSON.stringify(output.mock.calls);
-    for (const name of [
+
+    const events = output.mock.calls.map(
+      ([message]) => JSON.parse(message as string) as LogEvent,
+    );
+    for (const operation of [
       'browser.newPage',
       'page.goto',
       'keyboard.type',
       'locator.fill',
       'locator.click',
     ]) {
-      expect(logs).toContain(`${name}: start`);
-      expect(logs).toContain(`${name}: success`);
+      for (const phase of ['start', 'success'] as const) {
+        expect(events).toContainEqual(
+          expect.objectContaining({ operation, phase }),
+        );
+      }
     }
-    expect(logs).not.toContain('replaced');
+    expect(JSON.stringify(events)).not.toContain('replaced');
   } finally {
     await raw.close();
     output.mockRestore();
