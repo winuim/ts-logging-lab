@@ -23,6 +23,7 @@
     "example:part-02": "npm run build && node examples/part-02.mjs",
     "example:part-03": "npm run build && node examples/part-03.mjs",
     "example:part-06": "npm run build && node examples/part-06.mjs",
+    "example:part-08": "npm run build && node examples/part-08.mjs",
     "example:part-07": "npm run build && node examples/part-07.mjs"
   },
   "devDependencies": {

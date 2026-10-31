@@ -10,6 +10,8 @@ export type {
   LogAdapter,
   LogOptions,
   EmitterOptions,
+  LogAttributes,
+  ContextExtractor,
 } from './log-event.js';
 export { ConsoleAdapter } from './console-adapter.js';
 export {

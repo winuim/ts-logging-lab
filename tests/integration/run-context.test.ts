@@ -18,6 +18,11 @@ test('キャッシュ済みBrowser・Page・Keyboard・Locatorとチェーンは
           events.push(event);
         },
       },
+      extractor: {
+        start: (args: unknown[]) => ({ argumentCount: args.length }),
+        success: (result: unknown) => ({ isNull: result === null }),
+        failure: (error: unknown) => ({ isError: error instanceof Error }),
+      },
       category: 'browser',
       levels: { start: 'debug', success: 'debug' },
     } as const;
@@ -93,6 +98,23 @@ test('キャッシュ済みBrowser・Page・Keyboard・Locatorとチェーンは
       });
     }
     expect(events).toHaveLength(28);
+    const starts = events.filter((event) => event.phase === 'start');
+    expect(new Set(starts.map((event) => event.operationId)).size).toBe(
+      starts.length,
+    );
+    for (const start of starts) {
+      expect(start.operationId).toEqual(expect.any(String));
+      expect(start.attributes).toHaveProperty('argumentCount');
+      const pair = events.filter(
+        (event) => event.operationId === start.operationId,
+      );
+      expect(pair).toHaveLength(2);
+      expect(pair[1]?.operation).toBe(start.operation);
+      expect(pair[1]?.runId).toBe(start.runId);
+      expect(pair[1]?.attributes).toHaveProperty(
+        pair[1]?.phase === 'failure' ? 'isError' : 'isNull',
+      );
+    }
     expect(JSON.stringify(events)).not.toContain('dummy-');
     await goto('about:blank');
     expect(events.at(-1)).not.toHaveProperty('runId');
