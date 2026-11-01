@@ -20,7 +20,8 @@
     "format:check": "prettier --check .",
     "example:part-01": "npm run build && node examples/part-01.mjs",
     "browser:install": "puppeteer browsers install chrome",
-    "example:part-02": "npm run build && node examples/part-02.mjs"
+    "example:part-02": "npm run build && node examples/part-02.mjs",
+    "example:part-03": "npm run build && node examples/part-03.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

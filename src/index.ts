@@ -1,2 +1,9 @@
 export { withLog } from './with-log.js';
-export { withPageLogging } from './with-page-logging.js';
+export {
+  withPageLogging,
+  withBrowserLogging,
+  withKeyboardLogging,
+  withLocatorLogging,
+} from './with-page-logging.js';
+export { createLoggingProxy } from './logging-proxy.js';
+export type { LoggingProxyOptions } from './logging-proxy.js';
