@@ -1,6 +1,6 @@
 # 第3回：戻り値を含めたProxyの共通化
 
-この文書は[`part-03`タグ](https://github.com/winuim/ts-logging-lab/tree/part-03)（コミット`cf24f74`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-03`タグ](https://github.com/winuim/ts-logging-lab/tree/part-03)時点の設計・APIを説明します。後続回の機能は含めません。
 
 `createLoggingProxy(target, options)`に、実体へのgetter/setterとメソッド呼び出しを集約した。`name`と`asyncMethods`でログ対象を明示し、`wrapResult(value, property)`で戻り値の適用先を選ぶ。`asyncMethods`にはPromiseを返す既知のメソッドだけを指定する。設定のキーは対象のkeyofで検査するが、非同期性は呼び出し側の契約である。
 

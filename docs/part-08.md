@@ -1,6 +1,6 @@
 # 第8回：呼び出しIDとContextExtractorを実行制御から分離する
 
-この文書は[`part-08`タグ](https://github.com/winuim/ts-logging-lab/tree/part-08)（コミット`43cf717`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-08`タグ](https://github.com/winuim/ts-logging-lab/tree/part-08)時点の設計・APIを説明します。後続回の機能は含めません。
 
 ## 課題
 
@@ -8,7 +8,7 @@
 
 ## 設計上の選択
 
-[Issue #45](https://github.com/winuim/ts-logging-lab/issues/45)に対応する。`withLog`は元関数の実行・計測・成否判定と通知を担当する。`createOperationLogger`は内部モジュールとし、各呼び出しの開始時にNode.js標準の`randomUUID()`でoperationIdを一つ発行し、success/failureのクロージャーに保持する。ID発行に失敗した場合は、その呼び出しの両フェーズからoperationIdを省く。本体処理は続ける。
+`withLog`は元関数の実行・計測・成否判定と通知を担当する。`createOperationLogger`は内部モジュールとし、各呼び出しの開始時にNode.js標準の`randomUUID()`でoperationIdを一つ発行し、success/failureのクロージャーに保持する。ID発行に失敗した場合は、その呼び出しの両フェーズからoperationIdを省く。本体処理は続ける。
 
 operationIdはラッパー生成時・メソッド取得時には発行せず、ALSにも保存しない。キャッシュ済みProxyを再利用しても呼び出しごとに新しいIDになる。runIdとは独立しており、親子関係・リソース・Spanは表さない。
 

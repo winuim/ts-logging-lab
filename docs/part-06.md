@@ -1,6 +1,6 @@
 # 第6回：呼び出し側からカテゴリとログレベルを設定する
 
-この文書は[`part-06`タグ](https://github.com/winuim/ts-logging-lab/tree/part-06)（コミット`7d6f551`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-06`タグ](https://github.com/winuim/ts-logging-lab/tree/part-06)時点の設計・APIを説明します。後続回の機能は含めません。
 
 ## 課題
 

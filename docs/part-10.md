@@ -1,12 +1,12 @@
 # 第10回：別のログ発生源を共通Adapterへ接続する
 
-この文書は[`part-10`タグ](https://github.com/winuim/ts-logging-lab/tree/part-10)（コミット`2b23935`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-10`タグ](https://github.com/winuim/ts-logging-lab/tree/part-10)時点の設計・APIを説明します。後続回の機能は含めません。
 
 ## 課題：イベントは操作失敗ではない
 
 第9回までの`withLog → createOperationLogger`は、呼び出しの開始・成功・失敗を通知します。一方、Puppeteerの`pageerror`はページ内JavaScriptの未処理例外、`requestfailed`はリクエストの失敗通知です。これらを`phase: failure`に変換すると、どの操作が失敗したかについて誤った意味を持たせてしまいます。
 
-[Issue #48](https://github.com/winuim/ts-logging-lab/issues/48)では、操作を実行・計測しない`createDiagnosticLogger`を並列の発生源として追加します。
+操作を実行・計測しない`createDiagnosticLogger`を並列の発生源として追加します。
 
 ## 設計上の選択：既存の出力と新しい入力
 

@@ -1,12 +1,10 @@
 # 第11回：統合して確かめ、責務の分け方を振り返る
 
-全11回の最終回です。[`part-11`タグ](https://github.com/winuim/ts-logging-lab/tree/part-11)は、第10回の`part-10`と同じコミット`2b23935`を指します。新しい機能や公開API、`examples/part-11.mjs`、`example:part-11`コマンドは追加しません。
+全11回の最終回です。[`part-11`タグ](https://github.com/winuim/ts-logging-lab/tree/part-11)は、第10回の`part-10`と同じ実装を使い、機能を組み合わせたときの振る舞いを検証します。
 
-この文書は最新ブランチ側の読み方を整理したものです。タグ内のドキュメントを更新するために、タグを別コミットへ移動するものではありません。
+## 統合例を動かす
 
-## 統合シナリオの所在
-
-[第11回の記事](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-11.md)に、既存APIを組み合わせた統合例を掲載しています。記事の`article-part-11.mjs`を教材ルートへ保存して実行します。記事側の整合性修正は[zenn-contents PR #23](https://github.com/winuim/zenn-contents/pull/23)で管理しています。
+[第11回の記事](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-11.md)に、既存APIを組み合わせた統合例を掲載しています。記事の`article-part-11.mjs`を教材ルートへ保存して実行します。
 
 Node.js 26系でタグをcheckoutし、依存を導入してビルドします。Chromeを起動できる環境が必要です。
 
@@ -42,7 +40,7 @@ node article-part-11.mjs pino-info
 
 Puppeteer由来の診断イベントにrunIdが付くのは、通知時に有効なALS文脈がある場合です。購読時の文脈を保存する設計ではありません。フィルタで開始・成功ログが消えても、元処理が実行されなかった意味にはなりません。
 
-## 既存テストとの役割分担
+## テストの実行
 
 統合例は全体を通して出力を観察するためのものです。型と失敗の境界は、既存の単体テストと実Chrome統合テストで確認します。
 
@@ -56,8 +54,8 @@ npm run format:check
 npm run test:integration
 ```
 
-テストは`tests/unit/`と`tests/integration/`にあります。HOF・Proxy・同一性、文脈と呼び出しID、属性抽出・出力障害、Pinoの実出力、診断の購読と解除を分けて確認します。第11回用の新しい回帰テストを追加したものではありません。
+テストは`tests/unit/`と`tests/integration/`にあります。HOF・Proxy・同一性、文脈と呼び出しID、属性抽出・出力障害、Pinoの実出力、診断の購読と解除を分けて確認します。
 
 ## 連載の範囲
 
-OpenTelemetry連携、リソースID、任意スコープ、イベントカタログ、共通の自動マスキング、ベンチマークは全11回の実装に含めません。第12回や追加機能を予定済みとして扱わず、新たな要求があれば別途合意した範囲で検討します。
+OpenTelemetry連携、リソースID、任意スコープ、イベントカタログ、共通の自動マスキング、ベンチマークは全11回の実装に含めません。

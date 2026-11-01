@@ -1,6 +1,6 @@
 # 第7回：AsyncLocalStorageで処理単位のログを関連付ける
 
-この文書は[`part-07`タグ](https://github.com/winuim/ts-logging-lab/tree/part-07)（コミット`fccc6c2`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-07`タグ](https://github.com/winuim/ts-logging-lab/tree/part-07)時点の設計・APIを説明します。後続回の機能は含めません。
 
 ## 課題
 

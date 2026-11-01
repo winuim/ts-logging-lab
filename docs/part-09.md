@@ -1,6 +1,6 @@
 # 第9回：Adapterで既存ロガーとの境界を作る
 
-この文書は[`part-09`タグ](https://github.com/winuim/ts-logging-lab/tree/part-09)（コミット`4065230`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-09`タグ](https://github.com/winuim/ts-logging-lab/tree/part-09)時点の設計・APIを説明します。後続回の機能は含めません。
 
 ## 課題
 
@@ -8,7 +8,7 @@
 
 ## 設計上の選択
 
-[Issue #47](https://github.com/winuim/ts-logging-lab/issues/47)ではPinoAdapterを追加し、既存のLogAdapter契約でPinoへ接続する。Pino 10.4.0を実行時依存として固定する。Pinoの生成・設定・出力先の所有者はアプリケーションであり、Adapterは渡されたロガーの4メソッドだけを使う。公開コンストラクターの型は`Pick<Logger, 'debug' | 'info' | 'warn' | 'error'>`。共通のLogEventやContextExtractorはPinoの型を参照しない。
+PinoAdapterを使い、既存のLogAdapter契約でPinoへ接続する。Pino 10.4.0を実行時依存として固定する。Pinoの生成・設定・出力先の所有者はアプリケーションであり、Adapterは渡されたロガーの4メソッドだけを使う。公開コンストラクターの型は`Pick<Logger, 'debug' | 'info' | 'warn' | 'error'>`。共通のLogEventやContextExtractorはPinoの型を参照しない。
 
 withLog、createOperationLogger、createEmitter、withRunContext、ConsoleAdapterは変更しない。イベントのカテゴリ・レベル・メッセージ・runId・operationId・属性は従来どおり生成する。既定のAdapterもConsoleAdapterのまま。Pinoのmixin/childでrunIdを再付与したり、独自のALS管理を追加したりしない。
 

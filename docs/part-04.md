@@ -1,6 +1,6 @@
 # 第4回：WeakMapとunwrap
 
-この文書は[`part-04`タグ](https://github.com/winuim/ts-logging-lab/tree/part-04)（コミット`71ab011`）時点の設計・APIを説明します。後続回の機能は含めません。
+この文書は[`part-04`タグ](https://github.com/winuim/ts-logging-lab/tree/part-04)時点の設計・APIを説明します。後続回の機能は含めません。
 
 実体→ProxyとProxy→実体の対応をWeakMapで保持し、同じ実体の再ラップとラップ済みProxyへの再適用は同じProxyを返す。`unwrap<T>(value: T): T`は登録済みProxyを実体へ戻し、それ以外のオブジェクト・関数・primitiveはそのまま返す。型の根拠は同じTの実体とProxyだけを登録する内部の対応関係であり、型アサーションは使わない。
 
