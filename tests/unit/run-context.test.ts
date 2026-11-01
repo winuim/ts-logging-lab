@@ -242,6 +242,8 @@ test.each(['throw', 'reject'] as const)(
       {
         adapter: {
           emit(event) {
+            if (event.kind === 'diagnostic')
+              throw new Error('Unexpected diagnostic');
             events.push(event);
             if (mode === 'throw') throw new Error('output');
             return Promise.reject(new Error('output'));

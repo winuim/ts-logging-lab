@@ -59,6 +59,8 @@ test.each([
     const emit = createEmitter(
       {
         emit: (event) => {
+          if (event.kind === 'diagnostic')
+            throw new Error('Unexpected diagnostic');
           events.push(event);
         },
       },
@@ -81,6 +83,8 @@ test.each([undefined, 'browser', ''])(
     const emit = createEmitter(
       {
         emit: (event) => {
+          if (event.kind === 'diagnostic')
+            throw new Error('Unexpected diagnostic');
           events.push(event);
         },
       },
@@ -238,6 +242,8 @@ test('Proxyの初回設定・メソッドキャッシュ・引数と結果を維
     asyncMethods: ['run', 'fail'],
     adapter: {
       emit: (event) => {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
       },
     },
@@ -279,6 +285,8 @@ test('Pageラッパーもカテゴリ・レベル・Adapterを引き継ぐ', asy
   const page = withPageLogging(raw, {
     adapter: {
       emit: (event) => {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
       },
     },

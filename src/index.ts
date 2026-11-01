@@ -7,6 +7,9 @@ export type {
   LogLevel,
   OperationEvent,
   LogEvent,
+  LogRecord,
+  DiagnosticEvent,
+  DiagnosticLogEvent,
   LogAdapter,
   LogOptions,
   EmitterOptions,
@@ -24,3 +27,9 @@ export {
 export { createLoggingProxy } from './logging-proxy.js';
 export type { LoggingProxyOptions } from './logging-proxy.js';
 export { unwrap } from './proxy-registry.js';
+export { createDiagnosticLogger } from './diagnostic-logger.js';
+export type {
+  DiagnosticLogger,
+  DiagnosticOptions,
+} from './diagnostic-logger.js';
+export { subscribePageDiagnostics } from './page-diagnostics.js';

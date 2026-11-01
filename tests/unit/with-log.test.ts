@@ -99,6 +99,8 @@ describe('withLog', () => {
     const events: LogEvent[] = [];
     const adapter: LogAdapter = {
       emit(event) {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
         return new Promise<void>(() => undefined);
       },
@@ -116,6 +118,8 @@ describe('withLog', () => {
     const events: LogEvent[] = [];
     const adapter: LogAdapter = {
       emit(event) {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
       },
     };
@@ -128,6 +132,8 @@ describe('withLog', () => {
     const events: LogEvent[] = [];
     const emit = createEmitter({
       emit(event) {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
       },
     });
@@ -218,6 +224,8 @@ test.each(['dummy-token', undefined, { secret: 'dummy-cookie' }])(
     const events: LogEvent[] = [];
     const adapter: LogAdapter = {
       emit: (event) => {
+        if (event.kind === 'diagnostic')
+          throw new Error('Unexpected diagnostic');
         events.push(event);
       },
     };
