@@ -1,7 +1,8 @@
+import type { LogOptions } from './log-event.js';
 import { withLog } from './with-log.js';
 import { cachedProxy, registerProxy, unwrap } from './proxy-registry.js';
 
-export interface LoggingProxyOptions<T extends object> {
+export interface LoggingProxyOptions<T extends object> extends LogOptions {
   name: string;
   /** Promiseを返す操作のみを指定する。対象外のメソッドはReflect.applyで実体をthisとして呼び出す。 */
   asyncMethods: readonly (keyof T)[];
@@ -35,8 +36,10 @@ export function createLoggingProxy<T extends object>(
           args.map((argument) => unwrap(argument)),
         );
       const invoke = methods.has(property)
-        ? withLog(`${options.name}.${String(property)}`, (...args: unknown[]) =>
-            Promise.resolve(call(...args)),
+        ? withLog(
+            `${options.name}.${String(property)}`,
+            (...args: unknown[]) => Promise.resolve(call(...args)),
+            options,
           )
         : call;
       const wrapped = (...args: unknown[]): unknown => {

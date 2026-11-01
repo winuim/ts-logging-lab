@@ -1,5 +1,6 @@
 import { expectTypeOf, test } from 'vitest';
 
+import type { LogOptions } from '../../src/index.js';
 import { withLog } from '../../src/index.js';
 
 test('必須・省略可能・可変長引数と戻り値を保持する', () => {
@@ -44,4 +45,15 @@ export function checkInvalidCalls(): void {
   void receiver();
   // @ts-expect-error thisの型を変更できない
   void receiver.call({ value: 'wrong' });
+}
+
+export function checkLogOptions(options: LogOptions): void {
+  // @ts-expect-error 設定プロパティはreadonly
+  options.category = 'changed';
+  // @ts-expect-error フェーズの設定もreadonly
+  if (options.levels) options.levels.start = 'debug';
+  // @ts-expect-error 不正なレベルを受け付けない
+  withLog('work', () => Promise.resolve(1), { levels: { start: 'trace' } });
+  // @ts-expect-error 不正なフェーズを受け付けない
+  withLog('work', () => Promise.resolve(1), { levels: { finish: 'debug' } });
 }
