@@ -228,15 +228,18 @@ test.each(['dummy-token', undefined, { secret: 'dummy-cookie' }])(
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- 任意の拒否理由を保持する契約を検証する。
       const run = withLog('reject', () => Promise.reject(reason), { adapter });
       await expect(run()).rejects.toBe(reason);
+      expect(events[0]?.operationId).toEqual(expect.any(String));
       expect(events).toEqual([
         {
           operation: 'reject',
+          operationId: events[0]?.operationId,
           phase: 'start',
           level: 'info',
           message: 'Operation started',
         },
         {
           operation: 'reject',
+          operationId: events[0]?.operationId,
           phase: 'failure',
           durationMs: 4,
           level: 'error',
