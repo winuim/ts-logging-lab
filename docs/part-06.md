@@ -1,5 +1,7 @@
 # 第6回：呼び出し側からカテゴリとログレベルを設定する
 
+この文書は[`part-06`タグ](https://github.com/winuim/ts-logging-lab/tree/part-06)（コミット`7d6f551`）時点の設計・APIを説明します。後続回の機能は含めません。
+
 ## 課題
 
 頻繁に実行する操作の開始・成功を`debug`として分類し、失敗は既定の`error`に保ちたい。また、関連する操作を`browser`というカテゴリで検索したい。第5回の`withLog → createEmitter → LogAdapter`という責務の分離を保ちながら、呼び出し側で設定する。
@@ -59,4 +61,4 @@ const browser = withBrowserLogging(rawBrowser, {
 
 ## 残る課題
 
-出力の完了保証、フィルタリング、カテゴリごとの出力先、呼び出しを識別するIDは扱わない。既存の`part-05`などのタグは更新せず、改訂版は`rewrite-series`で管理する。Zenn記事は別リポジトリで扱う。
+出力の完了保証、フィルタリング、カテゴリごとの出力先、呼び出しを識別するIDは扱わない。次の第7回でrunId、第8回でoperationIdと属性抽出、第9回でPinoによる出力抑制を扱う。これらは第6回には含めない。記事はzenn-contentsで管理する。

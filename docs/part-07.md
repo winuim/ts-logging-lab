@@ -1,5 +1,7 @@
 # 第7回：AsyncLocalStorageで処理単位のログを関連付ける
 
+この文書は[`part-07`タグ](https://github.com/winuim/ts-logging-lab/tree/part-07)（コミット`fccc6c2`）時点の設計・APIを説明します。後続回の機能は含めません。
+
 ## 課題
 
 第6回までの操作名・フェーズ・カテゴリ・レベル・処理時間だけでは、並行するバッチやシナリオのログが混ざる。同じ操作を含む一連の処理を、すべての関数へIDを引数で渡さずに関連付けたい。
@@ -64,4 +66,4 @@ Node.js内のPromise／async-awaitを中心に扱う。Puppeteerのブラウザ�
 
 `run()`内で生成した非同期処理は文脈を引き継ぐ。待機していないバックグラウンド処理にも残り得るため、コールバック完了時にすべての子処理から文脈が消えるという保証はない。待機する処理の範囲は呼び出し側で管理する。
 
-OpenTelemetry用ContextManagerの自作、traceId/spanIdの生成・伝播、Span管理、HTTPヘッダーによる伝播は扱わない。マスキング・任意属性・イベントカタログ・リソース識別・フィルタリング・出力完了保証も追加しない。第8回以降の構成と改訂版タグの方針は未確定。Zenn記事は別作業とする。
+OpenTelemetry用ContextManagerの自作、traceId/spanIdの生成・伝播、Span管理、HTTPヘッダーによる伝播は扱わない。マスキング・任意属性・イベントカタログ・リソース識別・フィルタリング・出力完了保証も追加しない。次の第8回ではoperationIdとContextExtractorを追加する。これらは第7回には含めない。記事はzenn-contentsで管理する。

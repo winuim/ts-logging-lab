@@ -2,54 +2,67 @@
 
 **TypeScriptで「既存の処理にログを付けたい」という小さな要求から、設計を段階的に発展させる教材リポジトリです。**
 
-高階関数、Proxy/Reflect、WeakMap、Adapter、カテゴリとログレベル、マスキング、OpenTelemetry連携などを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
+高階関数、Proxy/Reflect、WeakMap、Adapter、カテゴリとログレベル、runId・operationId、属性抽出、Pino、診断ログを、実際に動くコードとテストで学びます。Puppeteerはログを付与する対象の一例であり、ライブラリ自体の開発が目的ではありません。
 
-> **ステータス：第9回までの改訂を `rewrite-series` に反映、第10回の実装を追加** — 第7回ではAsyncLocalStorageで一連の処理のrunIdを保持します。第8回はoperationIdとフェーズ別ContextExtractor、第9回はPinoAdapterによる既存ロガーとの接続、第10回は診断ログとPuppeteerイベント購読を扱います。第11回以降は改訂内容が未確定です。教材PRは `rewrite-series` 向けに作成し、既存の `main` と `part-XX` タグは変更しません。
+> **ステータス：全11回の構成を確定、第10回までの実装を `rewrite-series` に反映済み** — 第11回は既存機能の統合検証と設計の振り返りです。新しいAPIや`example:part-11`コマンドは追加しません。各回は`part-01`〜`part-11`で参照でき、最終回の`part-11`は`part-10`と同じ実装コミットを指します。教材のPRは`rewrite-series`を基点とし、`main`への反映や公開は別途の明示指示が必要です。
 
 ## このプロジェクトで学ぶこと
 
 - 既存処理の振る舞いと型を維持しながら、横断的なログ処理を追加する
 - 「何が起きたか」を表すイベントと、「どう出力するか」を分離する
 - ログに残す情報・残さない情報を、操作の文脈から設計する
-- 非同期処理や実オブジェクトの識別情報を、混同せず関連付ける
+- 実行のrunId、呼び出しのoperationId、Proxyと実体の同一性を区別する
 - ログ処理が本体の動作・安全性・性能に与える影響をテストする
 
 ## 責務の境界
 
-| この教材で設計・実装するもの                        | 第5回では実装しない／将来検討するもの                         |
-| --------------------------------------------------- | ------------------------------------------------------------- |
-| HOF/Proxyによる処理へのログ付与                     | ログレベルによる出力フィルタリング                            |
-| OperationEvent・LogEvent・LogAdapter、イベント生成  | 高度なSink/Formatterや出力基盤                                |
-| アプリ内のrunId文脈（第7回）                        | OpenTelemetry用ContextManagerの自作・通信先への伝播           |
-| カテゴリ・フェーズ別レベルの設定（第6回）           | 出力先、ファイル管理、ローテーション                          |
-| レベル別console出力（第5回）・レベル上書き（第6回） | 非同期出力の完了保証・バッファリング                          |
-| 操作の文脈に応じたマスキングと安全な属性抽出        | 汎用的なロギング機能                                          |
-| OpenTelemetryからの相関情報取得・ログへの付与       | traceId/spanId生成、Span管理・コンテキスト伝播はOpenTelemetry |
-| WeakMapによるアプリ固有のリソース識別               | ログ基盤の運用機構                                            |
+| この教材で実装・利用するもの                          | 全11回の実装範囲に含めないもの                       |
+| ----------------------------------------------------- | ---------------------------------------------------- |
+| HOF/Proxyによるログ付与と戻り値のラップ（第1〜3回）   | 任意のオブジェクトを完全に透明にするProxy            |
+| WeakMapによるProxyの再利用とunwrap（第4回）           | ログに出すPage等のリソースID                         |
+| 操作イベント・Emitter・ConsoleAdapter（第5回）        | 高度なSink/Formatter、ローテーション、出力基盤の自作 |
+| カテゴリ・フェーズ別レベル（第6回）                   | カテゴリ別の自動設定、イベントカタログ               |
+| ALSによるアプリ内runId文脈（第7回）                   | 通信先への文脈伝播、独自ContextManager               |
+| 呼び出し単位のoperationIdと安全な属性の選択（第8回）  | 親子ID、共通の自動マスキング、非同期Extractor        |
+| PinoAdapterとPinoのフィルタ・Redaction（第9回）       | 独自フィルタ・Redactionエンジン、flush・配送完了保証 |
+| 診断ログとPageのpageerror/requestfailed購読（第10回） | 診断の網羅、Puppeteerイベントと操作の自動相関        |
+| 既存機能の統合検証と責務の振り返り（第11回）          | OpenTelemetry連携、traceId/spanIdやSpanの独自管理    |
 
 **区別：** イベントに`info`/`error`等のレベルを「付ける」のはイベント生成側。第5回の`ConsoleAdapter`はレベルに応じてconsoleメソッドを振り分けますが、出力フィルタリングはしません。
 
 この教材はロギングライブラリもトレーシングSDKも再実装しません。第5回の`LogEvent`/`LogAdapter`は**特定のロガーに依存させず**、具体的な出力先は`ConsoleAdapter`です。`debug`/`info`はstdout、`warning`/`error`はstderrへJSONを1行ずつ書きます。
 
-## ロードマップ（第5回以降は改訂中・暫定）
+## 全11回の構成と対応タグ
 
-合意済みの回について、依頼されたIssueの範囲で実装します。第11回以降のタイトル・構成・順番は未確定です。旧ロードマップだけを根拠にIssueを作成したり、後続回を実装したりしません。
+各回は前回の実装を基に段階的に積み上げます。後の回の機能を前の回のタグへ先取りしません。第11回で連載を終え、第12回は設けません。
 
-| 回     | 主題                        | 追加する仕組み                                                        | 既存タグ／改訂版タグ |
-| ------ | --------------------------- | --------------------------------------------------------------------- | -------------------- |
-| 01     | 高階関数とジェネリクス      | `withLog` による最小のログ付与                                        | `part-01`            |
-| 02     | Proxy・Reflect・this        | インスタンスを安全にラップする                                        | `part-02`            |
-| 03     | Proxyの共通化               | 複数のオブジェクト／戻り値への拡張                                    | `part-03`            |
-| 04     | WeakMapと同一性             | `unwrap`、Proxy管理、イベントとの共存                                 | `part-04`            |
-| 05     | 構造化イベントとAdapter     | `OperationEvent`・`createEmitter`・`LogAdapter`・`ConsoleAdapter`     | 改訂タグ未確定       |
-| 06     | カテゴリとログレベル        | 呼び出し側の分類とフェーズ別レベル、既定値へのフォールバック          | 改訂タグ未確定       |
-| 07     | AsyncLocalStorageと実行文脈 | 呼び出し側指定のrunIdを処理単位で保持し、イベント生成時に付与         | 改訂タグ未確定       |
-| 08     | 呼び出しIDと属性抽出        | 自動operationId、フェーズ別ContextExtractorと実行制御の責務分離       | 改訂タグ未確定       |
-| 09     | Adapterと既存ロガー         | PinoAdapterでPinoのレベルフィルタ・Redaction・JSON出力を利用          | 改訂タグ未確定       |
-| 10     | 診断ログとイベント購読      | DiagnosticLoggerを共通Adapterへ接続し、Pageの診断イベントを購読・解除 | 改訂タグ未確定       |
-| 11以降 | 未確定                      | マスキング・リソース識別・OpenTelemetry連携等は構成と導入時期を再検討 | 改訂タグ未確定       |
+| 回  | 主題                        | 内容                                              | タグ                                                               | 実装コミット |
+| --- | --------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
+| 01  | 高階関数とジェネリクス      | withLogによる最小のログ付与                       | [`part-01`](https://github.com/winuim/ts-logging-lab/tree/part-01) | `3d388c6`    |
+| 02  | Proxy・Reflect・this        | 実体を受け手にしたPageの転送                      | [`part-02`](https://github.com/winuim/ts-logging-lab/tree/part-02) | `e07b63d`    |
+| 03  | 戻り値とチェーンのProxy     | Browser/Page/Keyboard/Locatorへの拡張             | [`part-03`](https://github.com/winuim/ts-logging-lab/tree/part-03) | `cf24f74`    |
+| 04  | WeakMapと同一性             | Proxy・メソッドの再利用とunwrap                   | [`part-04`](https://github.com/winuim/ts-logging-lab/tree/part-04) | `71ab011`    |
+| 05  | 構造化イベントとAdapter     | OperationEvent・createEmitter・ConsoleAdapter     | [`part-05`](https://github.com/winuim/ts-logging-lab/tree/part-05) | `23d179f`    |
+| 06  | カテゴリとログレベル        | 呼び出し側の分類とフェーズ別レベル                | [`part-06`](https://github.com/winuim/ts-logging-lab/tree/part-06) | `7d6f551`    |
+| 07  | AsyncLocalStorageと実行文脈 | 呼び出し側が指定したrunIdをイベント生成時に付与   | [`part-07`](https://github.com/winuim/ts-logging-lab/tree/part-07) | `fccc6c2`    |
+| 08  | 呼び出しIDと属性抽出        | operationIdとフェーズ別ContextExtractor           | [`part-08`](https://github.com/winuim/ts-logging-lab/tree/part-08) | `43cf717`    |
+| 09  | Adapterと既存ロガー         | PinoAdapterからPinoのフィルタ・Redactionを利用    | [`part-09`](https://github.com/winuim/ts-logging-lab/tree/part-09) | `4065230`    |
+| 10  | 診断ログとイベント購読      | DiagnosticLogger、共通LogRecord、Pageの購読・解除 | [`part-10`](https://github.com/winuim/ts-logging-lab/tree/part-10) | `2b23935`    |
+| 11  | 統合検証と設計の振り返り    | 第10回までの既存APIを組み合わせる。新機能なし     | [`part-11`](https://github.com/winuim/ts-logging-lab/tree/part-11) | `2b23935`    |
 
-第11回以降の構成・順番は未確定です。第1〜4回は既存タグを維持します。既存の`part-XX`タグは移動・上書きしません。改訂版のタグ方針は未確定で、実装完了やマージ完了だけを根拠にタグを作成・pushしません。各回は前回の実装を基に**段階的に積み上げます**。完成版の機能を序盤のタグへ先取りせず、読者が変化を追えるようにします。
+2026-11-01にユーザーの明示指示で旧タグを削除し、上記の`part-01`〜`part-11`へ再設定しました。旧構成の`part-12`は削除済みです。第1〜4回の実装コミットは従来と同じで、第5〜10回は改訂済みの各回コミットです。`part-11`は`part-10`と同じ`2b23935`を指します。
+
+各タグはその段階の実装スナップショットです。今回の構成・タグ説明を反映した最新ドキュメントは`rewrite-series`側を参照してください。タグの参照先へ後からドキュメント修正を取り込むための再設定は行いません。
+
+再設定前にcloneした作業コピーでは、手元の`part-*`タグが旧版を指す場合があります。教材リポジトリ内で次を実行すると、ローカルの`part-*`タグをGitHub上の対応タグへ更新できます。ブランチや作業ファイルは変更しません。
+
+```sh
+git fetch origin '+refs/tags/part-*:refs/tags/part-*'
+```
+
+GitHubで削除されたタグは、この取得ではローカルから消えません。旧`part-12`が手元に残っている場合は、`git tag -d part-12`で削除できます。
+
+第1・2回の以下の説明も、それぞれのタグ時点の仕様です。最新ブランチでは第5回以降の構造化出力や、後続回のAPIが加わっています。過去の実装を試す場合は、対応タグへcheckoutし、その時点のREADME・package.json・`.nvmrc`を使います。第1〜4回は当時のNode.js 24系、第5回以降と最新ブランチは26系です。
 
 ## 第1回：高階関数とジェネリクス
 
@@ -123,6 +136,8 @@ Puppeteer **25.16.0**と、そのCLIが指定するChrome for Testingを使用�
 
 `withLog(operation, fn, { category, levels, adapter })`で、操作の分類とフェーズ別レベルを設定できます。`category`は各出力イベントへ付与する任意の文字列です。操作名と同様に秘密を含まない固定文字列を使います。ロガー名や階層的な設定キーではありません。
 
+利用断片では公開APIのimportを省略しています。`goto`は呼び出し側が用意する非同期関数です。
+
 ```ts
 const loggedGoto = withLog('page.goto', goto, {
   category: 'browser',
@@ -137,6 +152,8 @@ const loggedGoto = withLog('page.goto', goto, {
 ## AsyncLocalStorageと実行文脈（第7回）
 
 `withRunContext({ runId: 'run-A' }, () => doWork())`で、バッチやシナリオの1回の実行を識別します。公開型`RunContext`はreadonlyな`runId: string`だけです。秘密を含まない値を呼び出し側が用意し、IDの自動生成は行いません。
+
+次は利用形を示す断片です。公開APIのimportを省略し、`work`は呼び出し側が用意する非同期関数とします。
 
 ```ts
 const loggedWork = withLog('work', work, {
@@ -165,10 +182,6 @@ await Promise.all([
 
 `OperationEvent`・`LogEvent`・`LogAdapter`は小さな契約とし、`withLog`は実行・計測・通知だけを担当します。`createEmitter`が固定メッセージと既定レベルを付加して出力失敗を隔離し、`ConsoleAdapter`がレベル別consoleメソッドへJSONを渡します。
 
-## OpenTelemetry連携の構想（旧ロードマップ第10回・未確定）
-
-**OpenTelemetryの標準API/SDKにtraceId・spanIdの生成、Spanの親子管理、非同期コンテキスト伝播を任せます。** OpenTelemetry用ContextManagerやトレースID生成器は自作しません。第7回のアプリ内runId文脈はNode.js標準の`AsyncLocalStorage.run()`で保持し、OpenTelemetryの文脈とは別に扱います。今後この構想が合意され、実装を依頼された場合に、アクティブSpanから有効なSpanContextを取得し、ログの構造化属性に安全に付与する**薄い連携部分**を扱います。Spanがない場合を許容し、特定のロガー固有の機能に依存しない設計を想定しています。教材の主題はOpenTelemetry SDKの再実装でも、全機能の解説でもありません。
-
 ## Adapterと既存ロガー（第9回）
 
 [Issue #47](https://github.com/winuim/ts-logging-lab/issues/47)では`new PinoAdapter(logger)`を`LogOptions.adapter`へ渡します。Pinoの生成と設定はアプリ側で行い、共通のログ生成・文脈取得・属性抽出は第8回のままです。既定の出力先は引き続きConsoleAdapterです。
@@ -181,25 +194,31 @@ PinoAdapterは`warning`を`warn`へ対応させ、`level`をPino標準の数値�
 npm run example:part-09
 ```
 
-ブラウザ不要の実行例はdebugの開始を抑制し、成功のダミー属性をRedactionし、失敗には安全な分類だけを残します。[設計・実出力例・検証と限界](docs/part-09.md)を参照してください。Zenn記事は別作業です。
+ブラウザ不要の実行例はdebugの開始を抑制し、成功のダミー属性をRedactionし、失敗には安全な分類だけを残します。[設計・実出力例・検証と限界](docs/part-09.md)を参照してください。記事は[zenn-contents](https://github.com/winuim/zenn-contents)で管理します。
 
 ## 診断ログとイベント購読（第10回）
 
 [Issue #48](https://github.com/winuim/ts-logging-lab/issues/48)では`createDiagnosticLogger({ adapter, category })`を操作ロガーと並列のログ発生源として追加しました。`logger.log(event, level, attributes?)`は共通EmitterとConsole/Pinoへ出力します。`LogAdapter.emit`は操作の`LogEvent`と診断の`DiagnosticLogEvent`を合わせた`LogRecord`を受け取ります。独自Adapterは`kind === 'diagnostic'`で判別してください。既存の操作JSONは維持し、診断にはphase・operationId・durationMsを付けません。
 
-`subscribePageDiagnostics(page, logger)`はpageerror/requestfailedを固定名とレベルだけで通知し、URLや例外詳細を読みません。同じPageは初回loggerで重複を防ぎ、返された解除関数を所有者がfinallyで呼びます。runIdは発火時のALS文脈から取得し、Puppeteerイベントと操作の相関は保証しません。[第10回の設計・互換性・制約・検証](docs/part-10.md)と`npm run example:part-10`を参照してください。Zenn記事は別作業です。
+`subscribePageDiagnostics(page, logger)`はpageerror/requestfailedを固定名とレベルだけで通知し、URLや例外詳細を読みません。同じPageは初回loggerで重複を防ぎ、返された解除関数を所有者がfinallyで呼びます。runIdは発火時のALS文脈から取得し、Puppeteerイベントと操作の相関は保証しません。[第10回の設計・互換性・制約・検証](docs/part-10.md)と`npm run example:part-10`を参照してください。記事は[zenn-contents](https://github.com/winuim/zenn-contents)で管理します。
 
-## マスキングの構想（導入時期・構成は未確定）
+## 統合検証と設計の振り返り（第11回・最終回）
 
-特定のロガーが提供するRedaction機能を前提とせず、**操作の意味に合わせてログ化前に安全な値を選ぶ**方法を構想しています。判定材料がない入力値は既定で秘匿する方向とし、追加ルールや例外・カスタムフックからの情報流出の検証も検討します。具体的な構成は未確定であり、ユーザーと合意し、実装を依頼された範囲で扱います。
+`part-11`は第10回と同じ実装を使い、操作ログ・診断ログ・Proxy・文脈・Pinoを組み合わせて検証します。統合シナリオは[第11回の記事](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-11.md)に掲載しています。記事にある`article-part-11.mjs`を教材ルートへ保存して実行する例であり、教材内のファイルやnpmコマンドとして提供するものではありません。[教材側の読み方と確認項目](docs/part-11.md)を参照してください。
+
+## 全11回で扱わないこと
+
+OpenTelemetryとの接続、リソースID、任意スコープ、イベントカタログ、共通の自動マスキングは実装していません。導入予定の回も設けません。runIdはアプリ内の一連の実行、operationIdは個々の呼び出しを識別し、traceId/spanIdやPage IDの代わりにはなりません。WeakMapは実体とProxyの参照管理に使います。
+
+機密値を抽出しないことを優先し、PinoのRedactionは設定したパスをそのPino出力だけで保護します。ログの欠落、非同期出力の遅延障害、flushや配送完了の保証、性能評価は別の要件です。新たな要件を扱う場合も、ユーザーと合意した範囲で別途検討します。
 
 ## 開発と記事の対応
 
 1. 合意済みの仕様を、依頼された範囲でREADME/AGENTS.mdへ同期する。仕様の同期と、エージェントの実行権限の変更を区別する。
-2. 合意済みの回について、依頼されたIssueの範囲で実装する。Issue作成の依頼は実装の許可を、実装の依頼はマージの許可を含まない。第11回以降は構成未確定であり、旧ロードマップだけを根拠にIssue作成や後続回の実装を進めない。
+2. 合意済みの回について、依頼されたIssueの範囲で実装する。Issue作成の依頼は実装の許可を、実装の依頼はマージの許可を含まない。全11回で連載を完結し、旧ロードマップだけを根拠にIssue作成や追加機能の実装を進めない。
 3. 改訂作業は`rewrite-series`からブランチとPRを作成し、実装・検証・レビュー対応までで結果を報告する。**マージは対象PRについてユーザーから明示的な依頼がある場合のみ行う。** レビュー・検証の成功だけではマージせず、自動マージの有効化にも別途明示的な依頼を必要とする。
 4. 依頼に基づくマージ後は、対象PRのマージ先ブランチを最新化して切り替える。改訂作業では`rewrite-series`を使う。マージ済み作業ブランチの削除前にPRのマージ状態と対象ブランチを確認する。未コミット・未反映の変更は切り替えや削除で失わないよう保護し、作業ブランチを削除しない。
-5. タグの作成・pushは、タグ名・対象コミット・実施する操作についてユーザーから明示的な依頼がある場合のみ行う。実装完了やマージ完了だけを根拠に実行しない。既存の`part-XX`タグは移動・上書きせず、改訂版のタグ方針は未確定として扱う。
+5. タグの作成・pushは、タグ名・対象コミット・実施する操作についてユーザーから明示的な依頼がある場合のみ行う。実装完了やマージ完了だけを根拠に実行しない。既存の`part-XX`タグは移動・上書きしない。
 6. 記事の変更は依頼された範囲で行い、参照するタグまたはコミットと、記載する実装例・API・実行結果を照合する。Zenn記事は明示的な依頼なしに公開せず、`published: false`を維持する。
 
 マージ・自動マージ・タグ作成やpush・公開などについて、エージェント判断で実行権限を追加・拡大しません。これらの運用ルールの変更は、ユーザーから明示的な指示がある場合のみ行います。合意済みの仕様を文書へ同期することは、こうした実行権限を変更する許可を含みません。
@@ -208,7 +227,7 @@ npm run example:part-09
 
 ## セットアップ
 
-Node.js **26系LTSのみ**をサポートします。パッチバージョンは固定せず、26系の最新パッチを使用してください。npmのバージョン制約は設けず、通常はNode.jsに同梱されたnpmを使用します。nvmを使う場合は次の手順で準備できます。別のバージョン管理ツールでも26系を指定してください。
+最新ブランチと第5回以降のタグはNode.js **26系のみ**をサポートします。パッチバージョンは固定せず、26系の最新パッチを使用してください。npmのバージョン制約は設けず、通常はNode.jsに同梱されたnpmを使用します。nvmを使う場合は次の手順で準備できます。別のバージョン管理ツールでも26系を指定してください。
 
 ```sh
 nvm install
@@ -245,7 +264,7 @@ npm ci
 ### 構成と設計判断
 
 ```text
-src/                          教材実装（withLog・withPageLoggingを公開）
+src/                          教材実装（操作・文脈・Adapter・Proxy・診断の公開API）
 examples/                     ビルド済みコードを使う小さな実行例
 tests/unit/                   ブラウザ不要の単体テスト
 tests/integration/            実Pageによるprivate・操作・成功・失敗の統合テスト
@@ -265,12 +284,12 @@ vitest.integration.config.ts  統合テストのみを収集
 
 設定の根拠：[Node.jsリリース方針](https://github.com/nodejs/Release)、[TypeScript設定](https://www.typescriptlang.org/tsconfig/)、[Vitest導入ガイド](https://vitest.dev/guide/)。
 
-READMEはセットアップ・設計判断・ロードマップを、AGENTS.mdは開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zennの[第1回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-01.md)は`part-01`に対応します。[第2回草稿](https://github.com/winuim/zenn-contents/blob/main/articles/ts-logging-lab-part-02.md)も対応する実装との照合対象です。記事の追加・修正は依頼された範囲で行い、明示的な公開依頼がなければ`published: false`を維持します。タグの作成・pushはタグ名・対象コミット・実施する操作について明示的な依頼がある場合のみ行い、実装のレビュー・マージ完了だけを根拠に実行しません。既存の`part-XX`タグは移動・上書きせず、改訂版のタグ方針は未確定です。
+READMEはセットアップ・設計判断・各回とタグの対応、AGENTS.mdは開発時の運用ルールを担当します。各回の実行例は公開APIを直接使い、テストと合わせて動作確認します。Zennの[全11記事の整合性修正PR #23](https://github.com/winuim/zenn-contents/pull/23)では、各回の実装と記事を照合し、再設定済みタグの参照先・実行手順へそろえています。記事の公開やPRのマージは別途の明示指示が必要です。
 
 ## 関連
 
 - 既存の実験的実装：[puppeteer-hof-logging](https://github.com/winuim/puppeteer-hof-logging)（教材の完成版と同一ではありません）
-- 記事草稿：[zenn-contents](https://github.com/winuim/zenn-contents)（現在の下書きは新構成に合わせて再編集予定）
+- 記事草稿：[zenn-contents](https://github.com/winuim/zenn-contents)（全11回。記事は未公開の草稿）
 
 ## ライセンス
 
