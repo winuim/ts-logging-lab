@@ -229,7 +229,7 @@ npm ci
 | `node dist/index.js`             | ビルド済みエントリーポイントの起動確認（API公開のみ・出力なし） |
 | `npm run example:part-01`        | 第1回の成功・失敗の実行例                                       |
 | `npm run browser:install`        | Puppeteerが指定するChromeを取得                                 |
-| `npm run example:part-10`        | 第10回の実Chromeでの診断イベント購読・Console/Pino出力例        |
+| `npm run example:part-10`        | 第10回の実Chromeでの診断イベント購読・Pino出力例                |
 | `npm run example:part-09`        | 第9回のPinoによる出力抑制・Redactionの実行例                    |
 | `npm run example:part-08`        | 第8回の並列operationId・安全な属性抽出の実行例                  |
 | `npm run example:part-07`        | 第7回の並行runId・入れ子・キャッシュ済み子ラッパーの実行例      |
