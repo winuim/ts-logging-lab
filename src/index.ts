@@ -1,4 +1,14 @@
 export { withLog } from './with-log.js';
+export { createEmitter } from './log-event.js';
+export type {
+  LogPhase,
+  LogLevel,
+  OperationEvent,
+  LogEvent,
+  LogAdapter,
+  LogOptions,
+} from './log-event.js';
+export { ConsoleAdapter } from './console-adapter.js';
 export {
   withPageLogging,
   withBrowserLogging,

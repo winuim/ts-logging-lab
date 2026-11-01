@@ -23,6 +23,7 @@ beforeEach(async () => {
   if (!browser) throw new Error('Browser is not initialized');
   raw = await browser.newPage();
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 afterEach(async () => {
@@ -85,19 +86,23 @@ test('実Pageのgotoが返す拒否理由を置き換えない', async () => {
   vi.spyOn(original, 'goto').mockRejectedValueOnce(error);
   const page = withPageLogging(original);
   await expect(page.goto('about:blank')).rejects.toBe(error);
-  expect(console.info).toHaveBeenLastCalledWith(
-    expect.stringMatching(/^page.goto: failure \(\d+\.\d{2} ms\)$/),
+  expect(console.error).toHaveBeenLastCalledWith(
+    expect.stringContaining('"phase":"failure"'),
   );
-  expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain(
-    'dummy-secret',
-  );
+  expect(
+    JSON.stringify([
+      vi.mocked(console.info).mock.calls,
+      vi.mocked(console.error).mock.calls,
+    ]),
+  ).not.toContain('dummy-secret');
 });
 
 test('実際の不正URLも失敗ログを出してrejectする', async () => {
   const page = withPageLogging(currentPage());
   await expect(page.goto('not-a-valid-url')).rejects.toBeInstanceOf(Error);
-  expect(console.info).toHaveBeenLastCalledWith(
-    expect.stringMatching(/^page.goto: failure \(\d+\.\d{2} ms\)$/),
+  expect(console.error).toHaveBeenLastCalledWith(
+    expect.stringContaining('"phase":"failure"'),
   );
-  expect(console.info).toHaveBeenCalledTimes(2);
+  expect(console.info).toHaveBeenCalledTimes(1);
+  expect(console.error).toHaveBeenCalledTimes(1);
 });
