@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import type { LogAdapter, LogEvent, LogLevel } from './log-event.js';
+import type { LogAdapter, LogRecord, LogLevel } from './log-event.js';
 
 const methods: Readonly<Record<LogLevel, 'debug' | 'info' | 'warn' | 'error'>> =
   {
@@ -15,7 +15,7 @@ export class PinoAdapter implements LogAdapter {
     private readonly logger: Pick<Logger, 'debug' | 'info' | 'warn' | 'error'>,
   ) {}
 
-  emit(event: LogEvent): void {
+  emit(event: LogRecord): void {
     const { level, message, ...fields } = event;
     this.logger[methods[level]](fields, message);
   }

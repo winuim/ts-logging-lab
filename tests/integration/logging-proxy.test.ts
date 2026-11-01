@@ -46,6 +46,8 @@ test('Browserの設定をPage・Keyboard・Locatorとチェーンへ引き継ぐ
     const browser = withBrowserLogging(raw, {
       adapter: {
         emit: (event) => {
+          if (event.kind === 'diagnostic')
+            throw new Error('Unexpected diagnostic');
           events.push(event);
         },
       },

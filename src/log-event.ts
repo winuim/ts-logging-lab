@@ -15,6 +15,7 @@ export interface ContextExtractor<
 }
 
 export interface OperationEvent {
+  readonly kind?: 'operation';
   readonly operation: string;
   readonly phase: LogPhase;
   readonly durationMs?: number;
@@ -27,8 +28,24 @@ export interface LogEvent extends OperationEvent {
   readonly level: LogLevel;
   readonly message: string;
 }
+export interface DiagnosticEvent {
+  readonly kind: 'diagnostic';
+  readonly event: string;
+  readonly level: LogLevel;
+  readonly attributes?: LogAttributes;
+}
+export interface DiagnosticLogEvent extends DiagnosticEvent {
+  readonly message: string;
+  readonly category?: string;
+  readonly runId?: string;
+  readonly operation?: never;
+  readonly phase?: never;
+  readonly operationId?: never;
+  readonly durationMs?: never;
+}
+export type LogRecord = LogEvent | DiagnosticLogEvent;
 export interface LogAdapter {
-  emit(event: LogEvent): void | Promise<void>;
+  emit(event: LogRecord): void | Promise<void>;
 }
 export interface EmitterOptions {
   readonly category?: string | undefined;
@@ -58,7 +75,7 @@ const messages: Record<LogPhase, string> = {
 export function createEmitter(
   adapter: LogAdapter,
   options: EmitterOptions = {},
-): (event: OperationEvent) => void {
+): (event: OperationEvent | DiagnosticEvent) => void {
   const category = options.category;
   const levels = {
     start: options.levels?.start ?? defaultLevels.start,
@@ -67,23 +84,39 @@ export function createEmitter(
   };
   return (event) => {
     const runId = currentRunId();
-    const logEvent: LogEvent = {
-      operation: event.operation,
-      phase: event.phase,
-      ...(event.durationMs === undefined
-        ? {}
-        : { durationMs: event.durationMs }),
-      ...(event.operationId === undefined
-        ? {}
-        : { operationId: event.operationId }),
-      ...(event.attributes === undefined
-        ? {}
-        : { attributes: event.attributes }),
+    const context = {
       ...(category === undefined ? {} : { category }),
       ...(runId === undefined ? {} : { runId }),
-      level: levels[event.phase],
-      message: messages[event.phase],
     };
+    const logEvent: LogRecord =
+      event.kind === 'diagnostic'
+        ? {
+            kind: 'diagnostic',
+            event: event.event,
+            level: event.level,
+            message: 'Diagnostic event',
+            ...(event.attributes === undefined
+              ? {}
+              : { attributes: event.attributes }),
+            ...context,
+          }
+        : {
+            operation: event.operation,
+            phase: event.phase,
+            ...(event.durationMs === undefined
+              ? {}
+              : { durationMs: event.durationMs }),
+            ...(event.operationId === undefined
+              ? {}
+              : { operationId: event.operationId }),
+            ...(event.attributes === undefined
+              ? {}
+              : { attributes: event.attributes }),
+            ...(category === undefined ? {} : { category }),
+            ...(runId === undefined ? {} : { runId }),
+            level: levels[event.phase],
+            message: messages[event.phase],
+          };
     try {
       const result = adapter.emit(logEvent);
       if (result) void Promise.resolve(result).catch(() => undefined);

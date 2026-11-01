@@ -1,8 +1,8 @@
-import type { LogAdapter, LogEvent } from './log-event.js';
+import type { LogAdapter, LogRecord } from './log-event.js';
 
 /** レベルに応じたconsoleメソッドへ1行1JSONで出力する。 */
 export class ConsoleAdapter implements LogAdapter {
-  emit(event: LogEvent): void {
+  emit(event: LogRecord): void {
     const message = JSON.stringify(event);
     switch (event.level) {
       case 'debug':
