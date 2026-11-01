@@ -1,5 +1,7 @@
 # 第8回：呼び出しIDとContextExtractorを実行制御から分離する
 
+この文書は[`part-08`タグ](https://github.com/winuim/ts-logging-lab/tree/part-08)（コミット`43cf717`）時点の設計・APIを説明します。後続回の機能は含めません。
+
 ## 課題
 
 第7回のrunIdは一連の処理を識別する。同じrunId内で同じoperationを並列に実行すると、開始と終端の対応を特定できない。また、引数・結果・拒否理由を丸ごと出力せず、実装者が許可した件数などの属性だけを記録したい。
@@ -58,4 +60,4 @@ npm run example:part-08
 
 ## 残る課題
 
-自動マスキング、操作別Extractorレジストリ、非同期抽出、リソース識別、親子operationId、OpenTelemetry/Span連携、フィルタリング、flush保証、イベントカタログは対象外。第9回以降の構成と改訂タグ方針は未確定であり、Zenn記事は別作業とする。
+自動マスキング、操作別Extractorレジストリ、非同期抽出、リソース識別、親子operationId、OpenTelemetry/Span連携、フィルタリング、flush保証、イベントカタログは対象外。次の第9回ではPinoAdapterを追加し、出力抑制と設定したパスのRedactionをPinoに任せる。これらは第8回には含めない。記事はzenn-contentsで管理する。

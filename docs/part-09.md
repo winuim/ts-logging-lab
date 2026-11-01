@@ -1,5 +1,7 @@
 # 第9回：Adapterで既存ロガーとの境界を作る
 
+この文書は[`part-09`タグ](https://github.com/winuim/ts-logging-lab/tree/part-09)（コミット`4065230`）時点の設計・APIを説明します。後続回の機能は含めません。
+
 ## 課題
 
 第8回までにログ生成と出力を分離した。ConsoleAdapterは全イベントをconsoleへ出力する。ログレベルに応じた抑制や特定属性の秘匿を追加するとき、共通側へ独自のフィルタやRedactionエンジンを追加すると責務が広がる。
@@ -74,6 +76,6 @@ Redactionは設定されたPinoを経由する出力だけの追加保護であ�
 
 既存LogAdapterの失敗隔離はemit呼び出し時の同期throwと返されたPromise rejectまで。PinoAdapterのemitはvoidを返し、後から起きるストリームのerrorやflush・配送完了を保証しない。出力先の障害管理はアプリケーション側の課題として残す。
 
-独自Redactionエンジン、共通マスキング、独自フィルタ、OpenTelemetry、リソース識別、高度なTransport、ローテーションは追加しない。第10回以降の構成と改訂タグ方針は未確定。Zenn記事は別作業とし、既存タグの移動や記事の公開は行わない。
+独自Redactionエンジン、共通マスキング、独自フィルタ、OpenTelemetry、リソース識別、高度なTransport、ローテーションは追加しない。次の第10回では診断ログとPageイベント購読を共通出力へ接続する。第11回は既存機能の統合検証と振り返りを行う最終回。これらを第9回の実装として説明しない。記事はzenn-contentsで管理する。
 
 参考：[Pino API](https://github.com/pinojs/pino/blob/v10.4.0/docs/api.md)、[Pino Redaction](https://github.com/pinojs/pino/blob/v10.4.0/docs/redaction.md)。
