@@ -22,11 +22,11 @@ ConsoleAdapterは共通levelでconsoleメソッドを選び、PinoAdapterは従�
 
 ## 実装：小さな診断ロガーとPage購読
 
-以下は実装済みの公開APIを使う最小例です。`page`は呼び出し側が生成したPuppeteer Pageです。
+以下は実装済みの公開APIを使う最小例です。`page`は呼び出し側が生成したPuppeteer Page、`pinoLogger`はアプリケーションが生成したPinoロガーです。第9回の`withLog`実行例と同じく、教材ではPinoAdapterを明示的に指定します。APIの省略時のデフォルトはConsoleAdapterのままです。
 
 ```ts
 const logger = createDiagnosticLogger({
-  adapter: new ConsoleAdapter(),
+  adapter: new PinoAdapter(pinoLogger),
   category: 'browser',
 });
 const dispose = subscribePageDiagnostics(page, logger);
@@ -62,7 +62,7 @@ npm run example:part-10
 
 単体テストはConsole/Pino双方の実出力、Pinoの抑制・Redaction、属性のコピーと除外、出力失敗、購読登録・重複・解除・再購読・部分登録失敗・ハンドラー失敗、await・並行文脈と文脈外のrunIdを検証します。型チェックでは判別共用体も確認します。
 
-統合テストは実Chromeでページ内の未処理例外と、リクエストをinterceptionでabortした失敗通知を起こします。URLのダミートークンとエラー詳細が出ないこと、Proxyとの重複防止、解除後の通知停止を確認します。実行例もConsole/Pinoのそれぞれで両通知を出します。ネットワークリクエストは送信前にabortし、外部サイトには接続しません。ログ行は実行して確認してください。時刻やブラウザ環境に依存する値を固定の実測結果として掲載しません。
+統合テストは実Chromeでページ内の未処理例外と、リクエストをinterceptionでabortした失敗通知を起こします。URLのダミートークンとエラー詳細が出ないこと、Proxyとの重複防止、解除後の通知停止を確認します。第10回の実行例はPinoAdapterに統一して両通知を出します。Console/Pinoの双方を扱えることは単体テストで検証します。ネットワークリクエストは送信前にabortし、外部サイトには接続しません。ログ行は実行して確認してください。時刻やブラウザ環境に依存する値を固定の実測結果として掲載しません。
 
 ## 残る課題
 
