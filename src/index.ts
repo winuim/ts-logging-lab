@@ -1,4 +1,7 @@
 export { withLog } from './with-log.js';
+export { isPromiseLike } from './is-promise-like.js';
+export { observePromise } from './observe-promise.js';
+export type { PromiseObserver } from './observe-promise.js';
 export { withRunContext } from './run-context.js';
 export type { RunContext } from './run-context.js';
 export { createEmitter } from './log-event.js';
