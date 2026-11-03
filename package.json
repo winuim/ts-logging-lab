@@ -41,5 +41,8 @@
   },
   "dependencies": {
     "pino": "10.4.0"
+  },
+  "overrides": {
+    "minimatch": "11.0.1"
   }
 }
