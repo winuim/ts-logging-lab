@@ -38,7 +38,7 @@ export function createLoggingProxy<T extends object>(
       const invoke = methods.has(property)
         ? withLog(
             `${options.name}.${String(property)}`,
-            (...args: unknown[]) => Promise.resolve(call(...args)),
+            async (...args: unknown[]) => await call(...args),
             options,
           )
         : call;

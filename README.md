@@ -52,7 +52,7 @@ npm ci
 ## 設計の全体像
 
 ```text
-非同期操作 → withLog → createOperationLogger ─┐
+同期・非同期操作 → withLog → createOperationLogger ─┐
                                             ├→ createEmitter → LogAdapter
 Pageのイベント → createDiagnosticLogger ────┘                  ├→ ConsoleAdapter
                                                               └→ PinoAdapter → Pino
@@ -62,7 +62,7 @@ Proxyは既知のメソッドを`withLog`で包み、BrowserからPage、Keyboar
 
 | 部品                         | 担当すること                                                        |
 | ---------------------------- | ------------------------------------------------------------------- |
-| withLog                      | 元の非同期関数の実行、時間計測、成否の通知                          |
+| withLog                      | 元の同期・非同期関数の実行、時間計測、成否の通知                    |
 | Proxyとunwrap                | 実体をthisにした転送、戻り値のラップ、参照の同一性                  |
 | createOperationLogger        | 呼び出しごとのoperationId、フェーズ別属性抽出、抽出失敗の隔離       |
 | withRunContext               | 呼び出し側が指定したrunIdを非同期処理へ引き継ぐ                     |
@@ -73,6 +73,32 @@ Proxyは既知のメソッドを`withLog`で包み、BrowserからPage、Keyboar
 
 `createOperationLogger`は内部モジュールです。利用側のAPIは`src/index.ts`から公開し、ビルド後は`dist/index.js`から読み込めます。
 
+同期処理と非同期処理のどちらにも、同じAPIでログを付けられます。
+
+```ts
+const add = withLog('add', (a: number, b: number) => a + b);
+const sum = add(1, 2); // number（Promiseにはならない）
+
+const load = withLog('load', async () => {
+  return await fetch('https://example.com');
+});
+const response = await load(); // Promiseの完了時に成否を記録
+```
+
+### Promise用の共通処理
+
+`isPromiseLike(value)`は、オブジェクトまたは関数が呼び出せる`then`を持つかを判定する型ガードです。`then`自体は実行しませんが、getterは評価するため、そこで起きた例外は呼び出し元へ伝えます。
+
+`observePromise(value, { success, failure })`はPromiseLikeを受け取り、完了時に対応するコールバックを一度呼びます。元の解決値・拒否理由を保つ標準Promiseを返し、Promiseの同一性は保ちません。コールバックは省略可能で、同期throw・非同期rejectは隔離し、その完了を待ちません。ログ以外の完了通知にも使えます。
+
+```ts
+const observed = observePromise(Promise.resolve(42), {
+  success: (value) => console.log('完了', value),
+  failure: (reason) => console.error('失敗', reason),
+});
+const value = await observed; // 42
+```
+
 ### ログを読むときの区別
 
 - `runId`は一連の実行、`operationId`は個々の呼び出しを識別します。Page IDや分散トレースのIDではありません。
@@ -82,7 +108,7 @@ Proxyは既知のメソッドを`withLog`で包み、BrowserからPage、Keyboar
 
 ## 保持する振る舞いと制約
 
-- `withLog`は元関数の引数・this・解決値・拒否理由を保ちます。asyncラッパーのためPromise自体の同一性は保たず、同期throwはrejectになります。同期関数や任意のオーバーロードを完全に保持する汎用ラッパーではありません。
+- `withLog`は元関数の引数・this・同期の戻り値とthrow・Promiseの解決値と拒否理由を保ちます。同期関数はPromiseで包まず、成功・失敗をその場で記録します。Promiseを返す関数の同期throwも、そのままthrowします。Promise自体の同一性や、任意のオーバーロードの完全な保持は保証しません。`isPromiseLike`で呼び出せる`then`を判定し、thenableや別realmのPromiseも`observePromise`で標準Promiseに変換します。thenableを返す関数の戻り値型は`Promise<Awaited<Result>>`になります。`then`のgetterが判定時にthrowした場合は、同期の失敗として記録してthrowします。
 - Proxyは実体とは別のオブジェクトです。既知の子オブジェクトと戻り値だけを包み、同じ実体には最初の設定を使います。unwrapはトップレベルの引数だけに適用します。
 - ProxyのPromise変換は現在のrealmのPromiseが対象です。任意のthenableや別realmのPromise、書き換え禁止かつ再定義禁止の関数プロパティを網羅しません。
 - Adapterの同期throwと返されたPromiseのrejectは隔離しますが、ログの欠落、後から起きるストリーム障害、flushや配送完了までは保証しません。
